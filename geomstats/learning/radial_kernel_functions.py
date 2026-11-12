@@ -299,7 +299,8 @@ def logistic_radial_kernel(distance, bandwidth=1.0):
     distance = _check_distance(distance)
     bandwidth = _check_bandwidth(bandwidth)
     scaled_distance = distance / bandwidth
-    weight = 1 / (gs.exp(scaled_distance) + 2 + gs.exp(-scaled_distance))
+    decay = gs.exp(-scaled_distance)
+    weight = decay / (1 + decay) ** 2
     return weight
 
 
@@ -322,7 +323,8 @@ def sigmoid_radial_kernel(distance, bandwidth=1.0):
     distance = _check_distance(distance)
     bandwidth = _check_bandwidth(bandwidth)
     scaled_distance = distance / bandwidth
-    weight = 1 / (gs.exp(scaled_distance) + gs.exp(-scaled_distance))
+    decay = gs.exp(-scaled_distance)
+    weight = decay / (1 + decay**2)
     return weight
 
 
