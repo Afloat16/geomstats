@@ -50,6 +50,18 @@ from geomstats.geometry.riemannian_metric import RiemannianMetric
 from geomstats.vectorization import repeat_out
 
 
+def _log_ratio(point, base_point):
+    """Evaluate a log ratio without overflowing or losing nearby-point precision."""
+    difference = point - base_point
+    is_close = gs.abs(difference) <= 0.5 * gs.abs(base_point)
+    relative_difference = gs.where(is_close, difference, 0.0) / gs.where(
+        is_close, base_point, 1.0
+    )
+    # log(1 + x) = 2 * arctanh(x / (2 + x)) is accurate for small x.
+    local_log = 2 * gs.arctanh(relative_difference / (2 + relative_difference))
+    return gs.where(is_close, local_log, gs.log(point) - gs.log(base_point))
+
+
 class PositiveReals(VectorSpaceOpenSet):
     """Class for the manifold of positive reals.
 
@@ -206,7 +218,7 @@ class PositiveRealsMetric(RiemannianMetric):
         log : array-like, shape=[..., 1]
             Riemannian logarithm.
         """
-        return base_point * gs.log(point / base_point)
+        return base_point * _log_ratio(point, base_point)
 
     def parallel_transport(
         self, tangent_vec, base_point, direction=None, end_point=None
@@ -262,8 +274,8 @@ class PositiveRealsMetric(RiemannianMetric):
         squared_dist : array-like, shape=[...]
             Riemannian squared distance.
         """
-        ratio = gs.squeeze(point_b / point_a, axis=-1)
-        return (gs.log(ratio)) ** 2
+        log_ratio = gs.squeeze(_log_ratio(point_b, point_a), axis=-1)
+        return log_ratio**2
 
     def dist(self, point_a, point_b):
         """Compute the positive reals distance.
@@ -282,8 +294,8 @@ class PositiveRealsMetric(RiemannianMetric):
         dist : array-like, shape=[...]
             Riemannian distance.
         """
-        ratio = gs.squeeze(point_b / point_a, axis=-1)
-        return gs.abs(gs.log(ratio))
+        log_ratio = gs.squeeze(_log_ratio(point_b, point_a), axis=-1)
+        return gs.abs(log_ratio)
 
     def injectivity_radius(self, base_point=None):
         """Compute the radius of the injectivity domain.
