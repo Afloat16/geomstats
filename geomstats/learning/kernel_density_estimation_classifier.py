@@ -116,21 +116,8 @@ class KernelDensityEstimationClassifier(RadiusNeighborsClassifier):
         self.space = space
 
         self.bandwidth = bandwidth
-
-        if isinstance(kernel, str):
-            weights = kernel
-        else:
-
-            def weights(distance_matrix):
-                weights_matrix = gs.array(
-                    [
-                        kernel(distance=dist, bandwidth=self.bandwidth)
-                        for dist in distance_matrix
-                    ]
-                )
-                return weights_matrix
-
         self.kernel = kernel
+        weights = kernel if isinstance(kernel, str) else self._kernel_weights
 
         distance = wrap(space.metric.dist)
         super().__init__(
@@ -142,3 +129,23 @@ class KernelDensityEstimationClassifier(RadiusNeighborsClassifier):
             outlier_label=outlier_label,
             n_jobs=n_jobs,
         )
+
+    def _kernel_weights(self, distance_matrix):
+        """Evaluate the current kernel with the current bandwidth."""
+        return gs.array(
+            [
+                self.kernel(distance=dist, bandwidth=self.bandwidth)
+                for dist in distance_matrix
+            ]
+        )
+
+    def set_params(self, **params):
+        """Set parameters and refresh the dependent distance and weight functions."""
+        super().set_params(**params)
+        if "kernel" in params:
+            self.weights = (
+                self.kernel if isinstance(self.kernel, str) else self._kernel_weights
+            )
+        if "space" in params:
+            self.metric = wrap(self.space.metric.dist)
+        return self

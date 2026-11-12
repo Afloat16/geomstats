@@ -92,6 +92,14 @@ class KNearestNeighborsClassifier(
             n_jobs=n_jobs,
         )
 
+    def set_params(self, **params):
+        """Set parameters and refresh the space-dependent metric and validation."""
+        super().set_params(**params)
+        if "space" in params:
+            self.metric = self.space.metric.dist
+            self._set_interop(self.space)
+        return self
+
     def _set_interop(self, space):
         array_repr = isinstance(space, Manifold)
         self._use_sklearn_patches = not array_repr or space.point_ndim > 1
