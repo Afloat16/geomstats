@@ -24,7 +24,8 @@ class RiemannianKMedoids(TransformerMixin, ClusterMixin, BaseEstimator):
     space : Manifold
         Equipped manifold.
     n_clusters : int
-        Number of clusters (k value of k-medoids).
+        Number of clusters (k value of k-medoids). Must not exceed the number
+        of training samples.
         Optional, default: 8.
     max_iter : int
         Maximum number of iterations.
@@ -32,7 +33,7 @@ class RiemannianKMedoids(TransformerMixin, ClusterMixin, BaseEstimator):
     init : str
         How to initialize cluster centers at the beginning of the algorithm. The
         choice 'random' will select training points as initial cluster centers
-        uniformly at random.
+        uniformly at random without replacement.
         Optional, default: 'random'.
     n_jobs : int
         Number of jobs to run in parallel. `-1` means using all processors.
@@ -62,7 +63,9 @@ class RiemannianKMedoids(TransformerMixin, ClusterMixin, BaseEstimator):
     def _initialize_medoids(self, distances):
         """Select initial medoids when beginning clustering."""
         if self.init == "random":
-            medoids = gs.random.choice(gs.arange(len(distances)), self.n_clusters)
+            medoids = gs.random.choice(
+                gs.arange(len(distances)), self.n_clusters, replace=False
+            )
         else:
             raise ValueError(
                 f"Unknown initialization method: {self.init!r}. Expected 'random'."

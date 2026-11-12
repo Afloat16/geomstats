@@ -9,18 +9,25 @@ from torch.distributions.multivariate_normal import (
 from ._dtype import _allow_complex_dtype
 
 
-def choice(x, a, p=None):
+def choice(x, a, p=None, replace=True):
     """Generate a random sample from a tensor along axis 0."""
     if not _torch.is_tensor(x):
         return x
 
+    if not replace and not 0 <= a <= len(x):
+        raise ValueError("Sample size must be between zero and the population size.")
+
     if p is None:
-        idx = _torch.randint(len(x), (a,), device=x.device)
+        idx = (
+            _torch.randint(len(x), (a,), device=x.device)
+            if replace
+            else _torch.randperm(len(x), device=x.device)[:a]
+        )
     else:
         idx = _torch.multinomial(
             _torch.as_tensor(p, device=x.device),
             num_samples=a,
-            replacement=True,
+            replacement=replace,
         )
 
     return x[idx]
