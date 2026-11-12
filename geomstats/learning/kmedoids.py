@@ -141,15 +141,11 @@ class RiemannianKMedoids(TransformerMixin, ClusterMixin, BaseEstimator):
         labels : array-like, shape=[n_samples,]
             Index of the cluster each sample belongs to.
         """
-        labels = gs.zeros(len(X))
+        if len(X) == 0:
+            return gs.zeros(0)
 
-        for point_index, point_value in enumerate(X):
-            distances = gs.zeros(len(self.cluster_centers_))
-            for cluster_index, cluster_value in enumerate(self.cluster_centers_):
-                distances[cluster_index] = self.space.metric.dist(
-                    point_value, cluster_value
-                )
-
-            labels[point_index] = gs.argmin(distances)
-
-        return labels
+        distances = gs.stack(
+            [self.space.metric.dist(X, center) for center in self.cluster_centers_],
+            axis=-1,
+        )
+        return gs.cast(gs.argmin(distances, axis=-1), gs.get_default_dtype())
