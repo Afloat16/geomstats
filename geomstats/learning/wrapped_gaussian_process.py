@@ -14,6 +14,8 @@ References
 
 """
 
+import math
+
 from sklearn.base import BaseEstimator, MultiOutputMixin
 from sklearn.gaussian_process import GaussianProcessRegressor
 
@@ -51,6 +53,7 @@ class WrappedGaussianProcess(MultiOutputMixin, RegressorMixin, BaseEstimator):
             n_restarts_optimizer=0,
             normalize_y=False,
             copy_X_train=True,
+            n_targets=math.prod(space.shape),
             random_state=None,
         )
 
