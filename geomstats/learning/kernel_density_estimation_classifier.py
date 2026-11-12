@@ -5,6 +5,7 @@ Lead author: Yann Cabanes.
 
 import math
 
+import numpy as np
 from sklearn.neighbors import RadiusNeighborsClassifier
 
 import geomstats.backend as gs
@@ -122,12 +123,11 @@ class KernelDensityEstimationClassifier(RadiusNeighborsClassifier):
         else:
 
             def weights(distance_matrix):
-                weights_matrix = gs.array(
-                    [
-                        kernel(distance=dist, bandwidth=self.bandwidth)
-                        for dist in distance_matrix
-                    ]
-                )
+                weights_matrix = np.empty(len(distance_matrix), dtype=object)
+                for index, dist in enumerate(distance_matrix):
+                    weights_matrix[index] = gs.to_numpy(
+                        gs.array(kernel(distance=dist, bandwidth=self.bandwidth))
+                    )
                 return weights_matrix
 
         self.kernel = kernel
