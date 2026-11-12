@@ -41,7 +41,9 @@ class GeometricMedian(BaseEstimator):
 
     Notes
     -----
-    * Required metric methods: `dist`, `log`, `exp`.
+    * Required metric methods: `dist`, `log`, `exp`, `norm`.
+    * At a sample, the total coincident weight contributes to the subgradient
+      optimality condition and reduces the step toward the other samples.
 
     References
     ----------
@@ -95,8 +97,18 @@ class GeometricMedian(BaseEstimator):
 
         w = weights[is_non_zero] / dists[is_non_zero]
         logs = self.space.metric.log(X[is_non_zero], current_median)
+        coincident_weight = gs.sum(weights[~is_non_zero])
+        factor = 1.0
+        if coincident_weight > 0:
+            residual = gs.einsum("n,n...->...", w, logs)
+            residual_norm = self.space.metric.norm(residual, current_median)
+            if residual_norm <= coincident_weight:
+                return current_median
+            # Coincident samples contribute a subgradient ball of this radius.
+            factor -= coincident_weight / residual_norm
+
         v_k = gs.einsum("n,n...->...", w / gs.sum(w), logs)
-        updated_median = self.space.metric.exp(lr * v_k, current_median)
+        updated_median = self.space.metric.exp(lr * factor * v_k, current_median)
         return updated_median
 
     def fit(self, X, y=None, weights=None):
