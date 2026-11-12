@@ -129,9 +129,7 @@ class InvertibleFlattenButFirst(FunctionTransformer):
         self : object
             FunctionTransformer class instance.
         """
-        if X.ndim == 2:
-            return self
-        self.shape = (-1,) + X.shape[1:]
+        self.shape = None if X.ndim == 2 else (-1,) + X.shape[1:]
         return self
 
 
