@@ -67,6 +67,7 @@ jobs:
       - name: Check formatting, hooks, and exact candidate source
         run: |
           ruff check geomstats/learning/pca.py tests/tests_geomstats/test_learning/test_pca.py
+          ruff format --diff geomstats/learning/pca.py tests/tests_geomstats/test_learning/test_pca.py || true
           ruff format --check geomstats/learning/pca.py tests/tests_geomstats/test_learning/test_pca.py
           pre-commit run --files geomstats/learning/pca.py tests/tests_geomstats/test_learning/test_pca.py
           git diff --exit-code -- geomstats/learning/pca.py tests/tests_geomstats/test_learning/test_pca.py
