@@ -43,11 +43,9 @@ def test_expectation_preserves_bayes_ratios(times, centers, scales, priors):
 
     # Along a Poincare diameter the arclengths are the supplied times.
     distances = np.asarray(times)[:, None] - np.asarray(centers)[None, :]
-    normalization = gs.to_numpy(
-        space.metric.normalization_factor(gs.array(scales))
-    )
+    normalization = gs.to_numpy(space.metric.normalization_factor(gs.array(scales)))
     logits = (
-        -distances**2 / (2 * np.square(scales))
+        -(distances**2) / (2 * np.square(scales))
         - np.log(normalization)
         + np.log(priors)
     )
@@ -75,7 +73,7 @@ def test_public_fit_retains_information_from_low_density_samples():
 
     estimator = InitializedEM(space, n_gaussians=2, max_iter=1)
     distances = np.asarray(times)[:, None] - np.asarray(centers)[None, :]
-    expected = softmax(-distances**2 / (2 * 0.5**2), axis=1).mean(axis=0)
+    expected = softmax(-(distances**2) / (2 * 0.5**2), axis=1).mean(axis=0)
 
     assert estimator.fit(samples) is estimator
 
