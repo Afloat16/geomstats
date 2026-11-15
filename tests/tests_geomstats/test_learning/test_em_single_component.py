@@ -145,4 +145,4 @@ def test_fit_with_equal_sample_and_component_counts(initialisation):
     assert estimator.means_.shape == (2, 2)
     assert estimator.variances_.shape == (2,)
     assert estimator._model.pdf(samples).shape == (2, 2)
-    assert gs.all(gs.isfinite(estimator.variances_))
+    assert np.isfinite(gs.to_numpy(estimator.variances_)).all()
