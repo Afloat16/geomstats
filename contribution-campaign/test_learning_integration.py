@@ -10,6 +10,7 @@ from geomstats.learning.pca import TangentPCA
 
 @pytest.mark.parametrize("symmetric", [False, True])
 def test_matrix_coordinate_round_trip_with_whitening(symmetric):
+    """Preserve both matrix coordinates and whitened component variance."""
     rng = np.random.RandomState(29)
     if symmetric:
         samples = rng.normal(size=(12, 2, 2))
