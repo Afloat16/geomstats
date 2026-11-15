@@ -1,0 +1,522 @@
+{
+  "repository": "geomstats/geomstats",
+  "status": "validated_commit_upstream_pr_blocked",
+  "title": "Honor TangentPCA whitening in transforms and reconstruction",
+  "body": "## Description\n\nTangentPCA accepts `whiten=True`, but fit_transform, transform and inverse_transform ignore the flag. The returned coordinates keep their original variances, and externally whitened coordinates are reconstructed at the wrong scale.\n\nNormalize the projected coordinates with the fitted standard deviations and undo that scaling before reconstruction. Principal directions and explained variances retain their existing meaning. Exactly zero variance uses a unit scale so constant coordinates stay finite; small positive variances are preserved without an arbitrary cutoff. Whitening requires at least two samples.\n\nThe whitening fit_transform path uses the same projection as transform instead of normalizing arbitrary left singular vectors in null directions. This adds a second log/projection evaluation when whitening is requested and keeps both entry points consistent for rank-deficient data. The default unwhitened path is unchanged.\n\n## Validation\n\n[Successful NumPy and Autograd validation](https://github.com/Afloat16/geomstats/actions/runs/43669069141) checks source `98f18d4f99993d067bbbc5d30e742f100dc3af7e` against base `2fc8e25eb8955767292552f9c0c1438be362ba8f`.\n\n- Retaining the 18 new tests while restoring the original production file gives **14 failures and 4 passing controls on each backend**.\n- Public fit, fit_transform, transform and inverse_transform are compared against independent scikit-learn PCA on Euclidean data, including held-out inputs and one/two/three retained components.\n- Sphere tests exercise a genuine log/exp chart, unit training variances and reconstruction equivalence with the unwhitened model for truncated and complete tangent coordinates.\n- Controls cover constant data, rank-one data, more features than samples, positive variance at a 1e-14 input scale, and the unchanged unwhitened path. Single-sample whitening reports its undefined variance explicitly.\n- All learning modules plus Euclidean and Hypersphere geometry, excluding the existing slow/redundant profiles:\n  - NumPy: **873 passed, 6 skipped, 632 deselected, 4 expected failures and 1 non-strict expected-failure case that passed**.\n  - Autograd: **875 passed, 4 skipped, 632 deselected, 2 expected failures and 3 non-strict expected-failure cases that passed**.\n- Ruff 0.4.8 lint/format and all applicable changed-file pre-commit hooks pass. The exact candidate source stays clean after validation.\n\nPython 3.13.18, NumPy 2.5.4, Autograd 1.9.1, SciPy 1.18.1 and scikit-learn 1.9.1. The complete repository, slow profiles and PyTorch backend were not run. The final validation seeds the repository's randomized fixtures before collection; an initial NumPy run had an unrelated existing exponential-barycenter fixture generate antipodal rotations, while all new whitening cases passed. No production or test assertions were changed for that rerun.\n\n## Related work\n\nThis implements the existing statistical-whitening parameter. #1063 and #1513/#1878 discuss metric weighting of principal directions, which is a separate operation. The matrix-coordinate reconstruction fix is also independent and is not included here. All 50 pre-existing fork branch versions inspected still only store the whitening flag without using it.\n\n## Checklist\n\n- [x] Focused production change using backend operations.\n- [x] Added public-estimator regression tests and controls.\n- [x] Documented whitening and its zero-variance/single-sample behavior.\n- [x] Relevant NumPy and Autograd scopes and configured style hooks pass.\n- [ ] Complete repository suite on every backend.\n",
+  "prefilled_url": "https://github.com/geomstats/geomstats/compare/main...Afloat16:fix/tangent-pca-whitening-20261115?expand=1&title=Honor%20TangentPCA%20whitening%20in%20transforms%20and%20reconstruction&body=%23%23%20Description%0A%0ATangentPCA%20accepts%20%60whiten%3DTrue%60%2C%20but%20fit_transform%2C%20transform%20and%20inverse_transform%20ignore%20the%20flag.%20The%20returned%20coordinates%20keep%20their%20original%20variances%2C%20and%20externally%20whitened%20coordinates%20are%20reconstructed%20at%20the%20wrong%20scale.%0A%0ANormalize%20the%20projected%20coordinates%20with%20the%20fitted%20standard%20deviations%20and%20undo%20that%20scaling%20before%20reconstruction.%20Principal%20directions%20and%20explained%20variances%20retain%20their%20existing%20meaning.%20Exactly%20zero%20variance%20uses%20a%20unit%20scale%20so%20constant%20coordinates%20stay%20finite%3B%20small%20positive%20variances%20are%20preserved%20without%20an%20arbitrary%20cutoff.%20Whitening%20requires%20at%20least%20two%20samples.%0A%0AThe%20whitening%20fit_transform%20path%20uses%20the%20same%20projection%20as%20transform%20instead%20of%20normalizing%20arbitrary%20left%20singular%20vectors%20in%20null%20directions.%20This%20adds%20a%20second%20log%2Fprojection%20evaluation%20when%20whitening%20is%20requested%20and%20keeps%20both%20entry%20points%20consistent%20for%20rank-deficient%20data.%20The%20default%20unwhitened%20path%20is%20unchanged.%0A%0A%23%23%20Validation%0A%0A%5BSuccessful%20NumPy%20and%20Autograd%20validation%5D%28https%3A%2F%2Fgithub.com%2FAfloat16%2Fgeomstats%2Factions%2Fruns%2F43669069141%29%20checks%20source%20%6098f18d4f99993d067bbbc5d30e742f100dc3af7e%60%20against%20base%20%602fc8e25eb8955767292552f9c0c1438be362ba8f%60.%0A%0A-%20Retaining%20the%2018%20new%20tests%20while%20restoring%20the%20original%20production%20file%20gives%20%2A%2A14%20failures%20and%204%20passing%20controls%20on%20each%20backend%2A%2A.%0A-%20Public%20fit%2C%20fit_transform%2C%20transform%20and%20inverse_transform%20are%20compared%20against%20independent%20scikit-learn%20PCA%20on%20Euclidean%20data%2C%20including%20held-out%20inputs%20and%20one%2Ftwo%2Fthree%20retained%20components.%0A-%20Sphere%20tests%20exercise%20a%20genuine%20log%2Fexp%20chart%2C%20unit%20training%20variances%20and%20reconstruction%20equivalence%20with%20the%20unwhitened%20model%20for%20truncated%20and%20complete%20tangent%20coordinates.%0A-%20Controls%20cover%20constant%20data%2C%20rank-one%20data%2C%20more%20features%20than%20samples%2C%20positive%20variance%20at%20a%201e-14%20input%20scale%2C%20and%20the%20unchanged%20unwhitened%20path.%20Single-sample%20whitening%20reports%20its%20undefined%20variance%20explicitly.%0A-%20All%20learning%20modules%20plus%20Euclidean%20and%20Hypersphere%20geometry%2C%20excluding%20the%20existing%20slow%2Fredundant%20profiles%3A%0A%20%20-%20NumPy%3A%20%2A%2A873%20passed%2C%206%20skipped%2C%20632%20deselected%2C%204%20expected%20failures%20and%201%20non-strict%20expected-failure%20case%20that%20passed%2A%2A.%0A%20%20-%20Autograd%3A%20%2A%2A875%20passed%2C%204%20skipped%2C%20632%20deselected%2C%202%20expected%20failures%20and%203%20non-strict%20expected-failure%20cases%20that%20passed%2A%2A.%0A-%20Ruff%200.4.8%20lint%2Fformat%20and%20all%20applicable%20changed-file%20pre-commit%20hooks%20pass.%20The%20exact%20candidate%20source%20stays%20clean%20after%20validation.%0A%0APython%203.13.18%2C%20NumPy%202.5.4%2C%20Autograd%201.9.1%2C%20SciPy%201.18.1%20and%20scikit-learn%201.9.1.%20The%20complete%20repository%2C%20slow%20profiles%20and%20PyTorch%20backend%20were%20not%20run.%20The%20final%20validation%20seeds%20the%20repository%27s%20randomized%20fixtures%20before%20collection%3B%20an%20initial%20NumPy%20run%20had%20an%20unrelated%20existing%20exponential-barycenter%20fixture%20generate%20antipodal%20rotations%2C%20while%20all%20new%20whitening%20cases%20passed.%20No%20production%20or%20test%20assertions%20were%20changed%20for%20that%20rerun.%0A%0A%23%23%20Related%20work%0A%0AThis%20implements%20the%20existing%20statistical-whitening%20parameter.%20%231063%20and%20%231513%2F%231878%20discuss%20metric%20weighting%20of%20principal%20directions%2C%20which%20is%20a%20separate%20operation.%20The%20matrix-coordinate%20reconstruction%20fix%20is%20also%20independent%20and%20is%20not%20included%20here.%20All%2050%20pre-existing%20fork%20branch%20versions%20inspected%20still%20only%20store%20the%20whitening%20flag%20without%20using%20it.%0A%0A%23%23%20Checklist%0A%0A-%20%5Bx%5D%20Focused%20production%20change%20using%20backend%20operations.%0A-%20%5Bx%5D%20Added%20public-estimator%20regression%20tests%20and%20controls.%0A-%20%5Bx%5D%20Documented%20whitening%20and%20its%20zero-variance%2Fsingle-sample%20behavior.%0A-%20%5Bx%5D%20Relevant%20NumPy%20and%20Autograd%20scopes%20and%20configured%20style%20hooks%20pass.%0A-%20%5B%20%5D%20Complete%20repository%20suite%20on%20every%20backend.%0A",
+  "base": "2fc8e25eb8955767292552f9c0c1438be362ba8f",
+  "commit": "98f18d4f99993d067bbbc5d30e742f100dc3af7e",
+  "branch": "fix/tangent-pca-whitening-20261115",
+  "validation_url": "https://github.com/Afloat16/geomstats/actions/runs/43669069141",
+  "validation_commit": "2a42a72f4930d3b46b2397f9f328a9e0d40b76ca",
+  "tests": {
+    "baseline_each_backend": {
+      "failed": 14,
+      "passed": 4,
+      "errors": 0
+    },
+    "numpy": {
+      "passed": 873,
+      "skipped": 6,
+      "deselected": 632,
+      "xfailed": 4,
+      "xpassed": 1
+    },
+    "autograd": {
+      "passed": 875,
+      "skipped": 4,
+      "deselected": 632,
+      "xfailed": 2,
+      "xpassed": 3
+    },
+    "style": "Ruff 0.4.8 and applicable pre-commit hooks pass"
+  },
+  "dedup": {
+    "preexisting_branch_sources": [
+      {
+        "name": "ChristineWan",
+        "sha": "d7596ce009fad5f09661ce8a6e88761150e3d005",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "alicehw1",
+        "sha": "e315040c46f4638504271a948183057890cfc84e",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "amil-geodesic-regression-rat-skull",
+        "sha": "d4d9958ee2b98aaaf766bb15210f46b3a7a0b225",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "amil-regression-notebook",
+        "sha": "c28bcd108388c39b5518ab0cba12d180e578285b",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "amil-viz",
+        "sha": "0733714f9bbc2e653d6f8ab7bc91db63e37fe803",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "benedict",
+        "sha": "e1378c71167e542d7cc47925990f38686db28a68",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "beta_dist",
+        "sha": "bbb28c9addcec3d0985078a42389cc5a20fdbb10",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "citations",
+        "sha": "bf2b0315b4651fe6e345f5171bd263746eb0ff18",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "fix/affine-lognormal-mean-20261029",
+        "sha": "9a40304efba500d1139efeff66ef7ac23ff27316",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "fix/brownian-batch-axis-20261029",
+        "sha": "fd6e11e2320a6dc8e1d696f60da7904bd3c098b5",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "fix/figshare-complete-archive-cache",
+        "sha": "0b338cc1b6ebf4abf2cfb7782220854be8377be2",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "fix/geometric-median-coincident-weights-20261112",
+        "sha": "e865dfbe8934e9de4152a66654995d9212bc7249",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "fix/kernel-ragged-neighborhood-weights-20261112",
+        "sha": "65f725088a78be684df61116ebe2caa60a3b1818",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "fix/kmeans-initial-centers",
+        "sha": "aac790187ec2b88738fb6083e1ed21ac8f85f98f",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "fix/kmedoids-distinct-initial-centers-20261112",
+        "sha": "eb23501978ad491dbd5d739eb99fad05a739afce",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "fix/kmedoids-final-labels-20261029",
+        "sha": "6ad346dec2b776f9d335470f29eb6bd20be329cf",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "fix/kmedoids-prediction-precision-batching-20261112",
+        "sha": "dc72d8c9bf3a0f25b7cc387f4e12175cc6bacb0c",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "fix/model-adapter-refit-shape-20261112",
+        "sha": "bf9574510a73dcf62b2a1b1efa61ae27111b6264",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "fix/neighbor-parameter-refresh-20261112",
+        "sha": "fc28fc17f6c88529292e7c465b4e58188bda18bf",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "fix/positive-real-log-ratio-stability-20261112",
+        "sha": "be02f029d3ce9523e762f3d0983b411ea8ce334f",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "fix/radial-kernel-exponential-stability-20261112",
+        "sha": "581e9b562590eefdd7f05db1c6107922d5daf2e1",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "fix/tangent-skew-matrix-dimensions-20261112",
+        "sha": "31a7ef06343383056d28ad2417699f1d6abf95f2",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "fix/wrapped-gp-prior-dimensions-20261112",
+        "sha": "aed77bccc862467b5f754d99959155b166d88f65",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "fix-product-metric-parallel-transport",
+        "sha": "e4040edb7ab8120b7e2267fa2458821c0df3e8bf",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "geomviz-se",
+        "sha": "4c8b1299390fdf43c4df0fe8264ad028c3a828e8",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "geomvizhw",
+        "sha": "6f695254f336953ef2b61de69543c96b25f055bd",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "geomvizhwmodified",
+        "sha": "6f695254f336953ef2b61de69543c96b25f055bd",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "grassmannian",
+        "sha": "e414579b7e17c7545b35f217d7c999b1c7527edf",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "johmathe-add-makefile",
+        "sha": "e5c3a242b636f83d08d20fb7cb30424a2f33b376",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "johmathe-jax",
+        "sha": "548f3cf8eff4a111dcbbf8d10baa7bcf2095da00",
+        "whitenLines": [
+          "                 whiten=False, tol=0.0, iterated_power='auto',",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "johmathe-parallel-tests",
+        "sha": "38fd937dd5cfee3851c30579f635767d7d670d55",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "johmathe-remove-tensorflow",
+        "sha": "4aeeedf35e7445ee3542f7a4645962f2bea0fdae",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "klein-bottle",
+        "sha": "77f539b35cb570400245ca5179a553f5b2a814f5",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "laurenviz",
+        "sha": "36dbd828cb1c8b0ee13b3d90ac64fd18fd6c413b",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "main",
+        "sha": "9941df0a37d900d540b7869d8c2898fca46266c8",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "ninamiolane/backend",
+        "sha": "25eb4f4f5c33b07b35c88717f984c86be728facf",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "ninamiolane/params-ai",
+        "sha": "fc82e0341cc2efd7fae961d9f9fbb892c79fe88c",
+        "whitenLines": [
+          "    whiten : bool",
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "ninamiolane/shape",
+        "sha": "9a3c8aba3e735bdbe83c82b4077c25b5cac5235b",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "ninamiolane/testing-by-claude",
+        "sha": "3a4eaa3f170c3afbe344668e4d53961525aa2a57",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "ninamiolane-contributing",
+        "sha": "edbae641fa1b1e53eb0f55936dc2bf1c484c519b",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "ninamiolane-updatelogo",
+        "sha": "08e646f9b86e6e534180bd8bf5b118fe7274ec69",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "poly_regression",
+        "sha": "15ee12c0998fb6e324bc4de4a6116e1a6ae1cecb",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "revert-1121-pytest-mig",
+        "sha": "52248a6a226388bd0ede1f62a53e93fbebdf28ca",
+        "whitenLines": [
+          "                 whiten=False, tol=0.0, iterated_power='auto',",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "revert-1451-nguigs-exp-log",
+        "sha": "7b20675fedd02e016100ae1e29e8ce8997e60158",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "revert-1551-a02_connection_bis",
+        "sha": "a9584d2745b9b3adb8728a2a347b8027cc56f73c",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "sam",
+        "sha": "9c22230069b83c8df7fa207b33407b261da67273",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "special_linear",
+        "sha": "5d8cab433b093c676c711d989bc45d38feed0269",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "stable",
+        "sha": "3e05560c5146c873af2f123b4ce0b07c3c8f7e3a",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "test-SE-viz",
+        "sha": "904bd092588851ee7912885810dad3b5a8aaf08b",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      },
+      {
+        "name": "yq_zhao",
+        "sha": "bd02e716ec35acd51f427d75457bb9c9dbcc7f0f",
+        "whitenLines": [
+          "        whiten=False,",
+          "        self.whiten = whiten"
+        ],
+        "exists": true
+      }
+    ],
+    "related_issues_reviewed": [
+      1063,
+      785,
+      246
+    ],
+    "related_prs_reviewed": [
+      1513,
+      1878,
+      2149
+    ],
+    "search_terms": [
+      "whiten",
+      "whitening",
+      "TangentPCA"
+    ]
+  },
+  "creation_restriction": {
+    "same_upstream_prior_attempt": "geomstats matrix-coordinate contribution",
+    "error": {
+      "error": "GitHub API error 403: {\"message\":\"Resource not accessible by integration\",\"documentation_url\":\"https://docs.github.com/rest/pulls/pulls#create-a-pull-request\",\"status\":\"403\"}",
+      "error_code": "FORBIDDEN",
+      "error_data": {
+        "message": "Resource not accessible by integration",
+        "documentation_url": "https://docs.github.com/rest/pulls/pulls#create-a-pull-request",
+        "status": "403"
+      }
+    },
+    "note": "The same upstream installation permission is still unavailable; this candidate has a complete prefilled fallback. No new upstream PR is claimed."
+  },
+  "validation_notes": {
+    "initial_run": "https://github.com/Afloat16/geomstats/actions/runs/43668821073",
+    "initial_numpy_failure": "Unchanged random exponential-barycenter fixture generated antipodal rotations; all whitening tests passed. Final run fixes random fixture seed, without altering source or assertions."
+  },
+  "notes": "The source branch contains only pca.py and the native whitening test module; validation workflow and handoff are separate."
+}
