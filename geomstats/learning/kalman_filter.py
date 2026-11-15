@@ -504,7 +504,8 @@ class KalmanFilter:
         and the innovation. The possibly non-linear update function is provided
         by the model.
         Given the observation Jacobian :math:`H` and covariance :math:`N`,
-        the current covariance :math:`P` is updated as :math:`(I - KH)P`.
+        the covariance is updated in Joseph form as
+        :math:`(I - KH)P(I - KH)^T + KNK^T` to reduce cancellation error.
 
         Parameters
         ----------
@@ -515,6 +516,11 @@ class KalmanFilter:
         gain = self.compute_gain(observation)
         obs_jac = self.model.observation_jacobian(self.state, observation)
         cov_factor = gs.eye(self.model.group.dim) - Matrices.mul(gain, obs_jac)
-        self.covariance = Matrices.mul(cov_factor, self.covariance)
+        obs_cov = self.model.get_measurement_noise_cov(
+            self.state, self.measurement_noise
+        )
+        self.covariance = Matrices.mul(
+            cov_factor, self.covariance, gs.transpose(cov_factor)
+        ) + Matrices.mul(gain, obs_cov, gs.transpose(gain))
         state_upd = gs.matvec(gain, innovation)
         self.state = self.model.group.exp(state_upd, self.state)
