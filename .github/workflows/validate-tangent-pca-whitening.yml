@@ -1,0 +1,74 @@
+name: Validate TangentPCA whitening
+
+on:
+  push:
+    branches: [validation/tangent-pca-whitening-20261115]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        backend: [numpy, autograd]
+    env:
+      GEOMSTATS_BACKEND: ${{ matrix.backend }}
+      OMP_NUM_THREADS: 1
+      OPENBLAS_NUM_THREADS: 1
+      MKL_NUM_THREADS: 1
+      JUPYTER_PLATFORM_DIRS: 1
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          ref: 98f18d4f99993d067bbbc5d30e742f100dc3af7e
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: "3.13"
+      - name: Install package and validation dependencies
+        run: |
+          python -m pip install --no-cache-dir -e '.[autograd,graph,test]' pytest pytest-cov ruff==0.4.8 pre-commit
+          python -m pip freeze
+      - name: Reproduce whitening regressions on the original implementation
+        run: |
+          python - <<'PY'
+          import pathlib
+          import subprocess
+          import xml.etree.ElementTree as ET
+          
+          source = pathlib.Path("geomstats/learning/pca.py")
+          candidate = source.read_bytes()
+          try:
+              source.write_bytes(subprocess.check_output(["git", "show", "2fc8e25eb8955767292552f9c0c1438be362ba8f:geomstats/learning/pca.py"]))
+              result = subprocess.run([
+                  "python", "-m", "pytest", "-q",
+                  "tests/tests_geomstats/test_learning/test_pca_whitening.py",
+                  "--junitxml=baseline-regressions.xml",
+              ], check=False)
+          finally:
+              source.write_bytes(candidate)
+          root = ET.parse("baseline-regressions.xml").getroot()
+          suites = [root] if root.tag == "testsuite" else root.findall("testsuite")
+          counts = {key: sum(int(suite.get(key, 0)) for suite in suites) for key in ("tests", "failures", "errors", "skipped")}
+          print({"baseline_exit": result.returncode, **counts})
+          assert result.returncode == 1 and counts == {"tests": 18, "failures": 14, "errors": 0, "skipped": 0}, counts
+          
+          PY
+      - name: Run complete affected learning and geometry modules
+        run: |
+          python -m pytest -q tests/tests_geomstats/test_learning tests/tests_geomstats/test_geometry/test_euclidean.py tests/tests_geomstats/test_geometry/test_hypersphere.py -m 'not (slow or redundant)' --junitxml=candidate-tests.xml
+      - name: Check formatting, hooks, and exact candidate source
+        run: |
+          ruff check geomstats/learning/pca.py tests/tests_geomstats/test_learning/test_pca_whitening.py
+          ruff format --diff geomstats/learning/pca.py tests/tests_geomstats/test_learning/test_pca_whitening.py || true
+          ruff format --check geomstats/learning/pca.py tests/tests_geomstats/test_learning/test_pca_whitening.py
+          pre-commit run --files geomstats/learning/pca.py tests/tests_geomstats/test_learning/test_pca_whitening.py
+          git diff --exit-code -- geomstats/learning/pca.py tests/tests_geomstats/test_learning/test_pca_whitening.py
+          git diff --check 2fc8e25eb8955767292552f9c0c1438be362ba8f...HEAD
+          test "$(git rev-parse HEAD)" = "98f18d4f99993d067bbbc5d30e742f100dc3af7e"
