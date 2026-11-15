@@ -48,9 +48,9 @@ def test_single_component_fit_matches_diameter_mean(initialisation, times):
     normalizer = float(
         gs.to_numpy(space.metric.normalization_factor(gs.array([scale])))[0]
     )
-    expected_density = np.exp(
-        -np.square(np.asarray(times) - mean_time) / (2 * scale**2)
-    ) / normalizer
+    expected_density = (
+        np.exp(-np.square(np.asarray(times) - mean_time) / (2 * scale**2)) / normalizer
+    )
     density = estimator._model.pdf(samples)
     assert density.shape == (len(times), 1)
     np.testing.assert_allclose(
@@ -113,9 +113,7 @@ def test_densities_include_every_sample_component_pair(count):
     samples = _data(times)
     squared_distances = (times[:, None] - centers[None, :]) ** 2
     reference = np.exp(-squared_distances / (2 * scale**2))
-    normalizer = gs.to_numpy(
-        space.metric.normalization_factor(gs.array([scale]))
-    )[0]
+    normalizer = gs.to_numpy(space.metric.normalization_factor(gs.array([scale])))[0]
 
     density = gs.to_numpy(model.pdf(samples))
     assert density.shape == (count, count)
