@@ -116,6 +116,19 @@ class GaussianMixtureModel:
 
         return variances, normalization_factor_var, phi_inv_var
 
+    def _component_distances(self, data):
+        """Compute every sample-component distance without squeezing batch axes."""
+        n_samples, n_components = data.shape[0], self.means.shape[0]
+        data_broadcast, means_broadcast = gs.broadcast_arrays(
+            gs.expand_dims(data, 1), gs.expand_dims(self.means, 0)
+        )
+        flat_shape = (n_samples * n_components,) + self.space.shape
+        distances = self.space.metric.dist(
+            gs.reshape(data_broadcast, flat_shape),
+            gs.reshape(means_broadcast, flat_shape),
+        )
+        return gs.reshape(distances, (n_samples, n_components))
+
     def pdf(self, data):
         """Return the separate probability density function of GMM.
 
@@ -141,9 +154,7 @@ class GaussianMixtureModel:
 
         variances_flatten = variances_expanded.flatten()
 
-        distances = -self.space.metric.dist(
-            gs.expand_dims(data, 1), gs.expand_dims(self.means, 0)
-        ) ** 2
+        distances = -(self._component_distances(data) ** 2)
         distances = gs.reshape(distances, (data.shape[0] * self.variances.shape[0],))
 
         num = gs.exp(distances / (2 * variances_flatten**2))
@@ -232,9 +243,7 @@ class GaussianMixtureModel:
             Probability density function computed for each point of
             the mesh data, for each component of the GMM.
         """
-        distance_to_mean = self.space.metric.dist(
-            gs.expand_dims(mesh_data, 1), gs.expand_dims(self.means, 0)
-        )
+        distance_to_mean = self._component_distances(mesh_data)
 
         variances_units = gs.expand_dims(self.variances, 0)
         variances_units = gs.repeat(variances_units, distance_to_mean.shape[0], axis=0)
@@ -385,9 +394,7 @@ class RiemannianEM(TransformerMixin, ClusterMixin, BaseEstimator):
             Probability of a given sample to belong to a component
             of the GMM, computed for all components.
         """
-        dist_means_data = self.space.metric.dist(
-            gs.expand_dims(data, 1), gs.expand_dims(self._model.means, 0)
-        ) ** 2
+        dist_means_data = self._model._component_distances(data) ** 2
 
         weighted_dist_means_data = (dist_means_data * posterior_probabilities).sum(
             0
