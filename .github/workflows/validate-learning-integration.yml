@@ -1,0 +1,79 @@
+name: Validate five independent Geomstats learning fixes
+
+on:
+  push:
+    branches: [validation/learning-five-fixes-20261115]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        backend: [numpy, autograd]
+    env:
+      GEOMSTATS_BACKEND: ${{ matrix.backend }}
+      OMP_NUM_THREADS: 1
+      OPENBLAS_NUM_THREADS: 1
+      MKL_NUM_THREADS: 1
+      JUPYTER_PLATFORM_DIRS: 1
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          ref: 281304432c1dec38ff07d034ec95440e3ece272a
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: "3.13"
+      - name: Install validation dependencies
+        run: |
+          python -m pip install --no-cache-dir -e '.[autograd,graph,test]' pytest pytest-cov ruff==0.4.8 pre-commit
+          python -m pip freeze
+      - name: Verify fixed integration source and manifest
+        run: |
+          test "$(git rev-parse HEAD)" = "281304432c1dec38ff07d034ec95440e3ece272a"
+          python - <<'PY'
+          import json
+          import pathlib
+          import subprocess
+          manifest = json.loads(pathlib.Path("contribution-campaign/learning-integration-manifest.json").read_text())
+          assert len(manifest["source_commits"]) == 5
+          assert manifest["counted_as_new_contribution"] is False
+          print(json.dumps(manifest, indent=2))
+          print("INTEGRATION_TREE", subprocess.check_output(["git", "rev-parse", "HEAD^{tree}"], text=True).strip())
+          PY
+      - name: Run all composed learning and adjacent geometry tests
+        run: |
+          python - <<'PY'
+          import random
+          import sys
+          import geomstats.backend as gs
+          import pytest
+          random.seed(0)
+          gs.random.seed(0)
+          sys.exit(pytest.main([
+              "-q", "tests/tests_geomstats/test_learning",
+              "tests/tests_geomstats/test_geometry/test_euclidean.py",
+              "tests/tests_geomstats/test_geometry/test_poincare_ball.py",
+              "tests/tests_geomstats/test_geometry/test_hypersphere.py",
+              "tests/tests_geomstats/test_geometry/test_matrices.py",
+              "tests/tests_geomstats/test_geometry/test_special_orthogonal.py",
+              "tests/tests_geomstats/test_geometry/test_spd_matrices.py",
+              "contribution-campaign/test_learning_integration.py",
+              "-m", "not (slow or redundant)", "--junitxml=integration-tests.xml",
+          ]))
+          PY
+      - name: Verify formatting and clean exact source
+        run: |
+          ruff check geomstats/learning/pca.py geomstats/learning/expectation_maximization.py geomstats/learning/frechet_mean.py tests/tests_geomstats/test_learning/test_pca.py tests/tests_geomstats/test_learning/test_pca_whitening.py tests/tests_geomstats/test_learning/test_em_single_component.py tests/tests_geomstats/test_learning/test_em_log_posteriors.py tests/tests_geomstats/test_learning/test_batch_mean_weights.py contribution-campaign/test_learning_integration.py
+          ruff format --diff geomstats/learning/pca.py geomstats/learning/expectation_maximization.py geomstats/learning/frechet_mean.py tests/tests_geomstats/test_learning/test_pca.py tests/tests_geomstats/test_learning/test_pca_whitening.py tests/tests_geomstats/test_learning/test_em_single_component.py tests/tests_geomstats/test_learning/test_em_log_posteriors.py tests/tests_geomstats/test_learning/test_batch_mean_weights.py contribution-campaign/test_learning_integration.py || true
+          ruff format --check geomstats/learning/pca.py geomstats/learning/expectation_maximization.py geomstats/learning/frechet_mean.py tests/tests_geomstats/test_learning/test_pca.py tests/tests_geomstats/test_learning/test_pca_whitening.py tests/tests_geomstats/test_learning/test_em_single_component.py tests/tests_geomstats/test_learning/test_em_log_posteriors.py tests/tests_geomstats/test_learning/test_batch_mean_weights.py contribution-campaign/test_learning_integration.py
+          pre-commit run --files geomstats/learning/pca.py geomstats/learning/expectation_maximization.py geomstats/learning/frechet_mean.py tests/tests_geomstats/test_learning/test_pca.py tests/tests_geomstats/test_learning/test_pca_whitening.py tests/tests_geomstats/test_learning/test_em_single_component.py tests/tests_geomstats/test_learning/test_em_log_posteriors.py tests/tests_geomstats/test_learning/test_batch_mean_weights.py contribution-campaign/test_learning_integration.py
+          git diff --exit-code
+          git diff --check 2fc8e25eb8955767292552f9c0c1438be362ba8f...HEAD
