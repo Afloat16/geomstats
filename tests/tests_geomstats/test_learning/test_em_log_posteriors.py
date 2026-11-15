@@ -83,7 +83,7 @@ def test_public_fit_retains_information_from_low_density_samples():
         gs.to_numpy(estimator.mixture_coefficients_), expected, rtol=2e-5
     )
     assert float(estimator.means_[0, 0]) < 0 < float(estimator.means_[1, 0])
-    assert gs.all(gs.isfinite(estimator.means_))
+    assert np.isfinite(gs.to_numpy(estimator.means_)).all()
     assert gs.all(space.belongs(estimator.means_))
 
 
@@ -103,3 +103,26 @@ def test_empty_component_regularization_keeps_normalized_posteriors(priors):
     np.testing.assert_allclose(
         gs.to_numpy(estimator.mixture_coefficients_).sum(), 1.0, rtol=0, atol=1e-12
     )
+
+
+@pytest.mark.parametrize("scales", [[0.6, 0.6], [0.6, 0.9]])
+def test_weighted_density_uses_the_manifold_normalizer(scales):
+    space = PoincareBall(2)
+    centers = np.array([-0.2, 0.4])
+    times = np.array([-0.6, 0.2, 0.7])
+    priors = gs.array([0.2, 0.8])
+    model = GaussianMixtureModel(
+        space, means=_diameter(centers), variances=gs.array(scales)
+    )
+    normalizers = gs.to_numpy(space.metric.normalization_factor(gs.array(scales)))
+    squared_distances = (times[:, None] - centers[None, :]) ** 2
+    expected = (
+        np.exp(-squared_distances / (2 * np.square(scales)))
+        / normalizers
+        * np.array([0.2, 0.8])
+    )
+
+    actual = gs.to_numpy(model.weighted_pdf(priors, _diameter(times)))
+
+    assert actual.shape == (3, 2)
+    np.testing.assert_allclose(actual, expected, rtol=1e-6, atol=1e-12)
