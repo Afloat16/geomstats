@@ -25,8 +25,8 @@ jobs:
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
-          ref: aba145bf7f3314f9465da240730d1bc4cca8b82f
-          fetch-depth: 2
+          ref: 29528d123f4f61ec235f494a68282d615ff57d11
+          fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         with:
@@ -37,7 +37,7 @@ jobs:
           python -m pip freeze
       - name: Verify fixed integration source and manifest
         run: |
-          test "$(git rev-parse HEAD)" = "aba145bf7f3314f9465da240730d1bc4cca8b82f"
+          test "$(git rev-parse HEAD)" = "29528d123f4f61ec235f494a68282d615ff57d11"
           python - <<'PY'
           import json
           import pathlib
