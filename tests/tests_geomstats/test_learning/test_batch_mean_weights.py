@@ -21,9 +21,7 @@ def _points_and_reference(kind, weights):
         averages = np.array(
             [np.average(times[:, k], weights=weights[:, k]) for k in range(3)]
         )
-        expected = np.stack(
-            (np.tanh(averages / 2), np.zeros_like(averages)), axis=-1
-        )
+        expected = np.stack((np.tanh(averages / 2), np.zeros_like(averages)), axis=-1)
     else:
         if kind == "euclidean":
             space = Euclidean(2)
@@ -34,10 +32,7 @@ def _points_and_reference(kind, weights):
                 (times, 2 * times + 1, times**2, -times), axis=-1
             ).reshape(4, 3, 2, 2)
         expected = np.stack(
-            [
-                np.average(points[:, k], axis=0, weights=weights[:, k])
-                for k in range(3)
-            ]
+            [np.average(points[:, k], axis=0, weights=weights[:, k]) for k in range(3)]
         )
     return space, gs.array(points), expected
 
@@ -52,9 +47,7 @@ def test_batch_means_are_invariant_to_independent_weight_scales(kind, scales):
     space, points, expected = _points_and_reference(kind, weights)
     input_weights = gs.array(weights)
     original_points = gs.copy(points)
-    estimator = FrechetMean(
-        space, method="batch", optimizer_kwargs={"epsilon": 1e-12}
-    )
+    estimator = FrechetMean(space, method="batch", optimizer_kwargs={"epsilon": 1e-12})
 
     assert estimator.fit(points, weights=input_weights) is estimator
 
@@ -86,9 +79,7 @@ def test_em_updates_low_mass_component_mean_from_all_its_weights():
     centers = np.array([-0.3, 2.0])
 
     def diameter(values):
-        return gs.array(
-            np.stack((np.tanh(values / 2), np.zeros_like(values)), axis=-1)
-        )
+        return gs.array(np.stack((np.tanh(values / 2), np.zeros_like(values)), axis=-1))
 
     class InitializedEM(RiemannianEM):
         def _initialization(self, X):

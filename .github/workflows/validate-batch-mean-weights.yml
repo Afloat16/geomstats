@@ -25,8 +25,8 @@ jobs:
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
-          ref: f7701fdc0cb89b0e2115d7e2b4d67f3ea1bd7860
-          fetch-depth: 2
+          ref: 5a7b9f83781a14b1424ed769444b99dacd3ce2ca
+          fetch-depth: 10
           persist-credentials: false
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         with:
@@ -87,4 +87,4 @@ jobs:
           pre-commit run --files geomstats/learning/frechet_mean.py tests/tests_geomstats/test_learning/test_batch_mean_weights.py
           git diff --exit-code -- geomstats/learning/frechet_mean.py tests/tests_geomstats/test_learning/test_batch_mean_weights.py
           git diff --check 2fc8e25eb8955767292552f9c0c1438be362ba8f...HEAD
-          test "$(git rev-parse HEAD)" = "f7701fdc0cb89b0e2115d7e2b4d67f3ea1bd7860"
+          test "$(git rev-parse HEAD)" = "5a7b9f83781a14b1424ed769444b99dacd3ce2ca"
