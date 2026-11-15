@@ -5,7 +5,10 @@ import pytest
 
 import geomstats.backend as gs
 from geomstats.geometry.poincare_ball import PoincareBall
-from geomstats.learning.expectation_maximization import RiemannianEM
+from geomstats.learning.expectation_maximization import (
+    GaussianMixtureModel,
+    RiemannianEM,
+)
 
 
 def _data(times):
@@ -96,3 +99,50 @@ def test_multiple_components_retain_existing_shape(initialisation):
     np.testing.assert_allclose(
         gs.to_numpy(estimator.mixture_coefficients_).sum(), 1.0, atol=1e-8
     )
+
+
+@pytest.mark.parametrize("count", [1, 2, 3])
+def test_densities_include_every_sample_component_pair(count):
+    times = np.array([-0.3, 0.4, 0.8])[:count]
+    centers = np.array([-0.2, 0.3, 0.6])[:count]
+    space = PoincareBall(2)
+    scale = 0.7
+    model = GaussianMixtureModel(
+        space, means=_data(centers), variances=gs.ones(count) * scale
+    )
+    samples = _data(times)
+    squared_distances = (times[:, None] - centers[None, :]) ** 2
+    reference = np.exp(-squared_distances / (2 * scale**2))
+    normalizer = gs.to_numpy(
+        space.metric.normalization_factor(gs.array([scale]))
+    )[0]
+
+    density = gs.to_numpy(model.pdf(samples))
+    assert density.shape == (count, count)
+    np.testing.assert_allclose(density, reference / normalizer, rtol=1e-6)
+
+    weighted = gs.to_numpy(model.weighted_pdf(gs.ones(count) / count, samples))
+    assert weighted.shape == (count, count)
+    # Equal scales share a normalizer, so row ratios depend only on distances.
+    np.testing.assert_allclose(
+        weighted / weighted.sum(axis=1, keepdims=True),
+        reference / reference.sum(axis=1, keepdims=True),
+        rtol=1e-6,
+    )
+
+
+@pytest.mark.parametrize("initialisation", ["random", "kmeans"])
+def test_fit_with_equal_sample_and_component_counts(initialisation):
+    gs.random.seed(5)
+    samples = _data([-0.5, 0.6])
+    estimator = RiemannianEM(
+        PoincareBall(2),
+        n_gaussians=2,
+        initialisation_method=initialisation,
+        max_iter=20,
+    ).fit(samples)
+
+    assert estimator.means_.shape == (2, 2)
+    assert estimator.variances_.shape == (2,)
+    assert estimator._model.pdf(samples).shape == (2, 2)
+    assert gs.all(gs.isfinite(estimator.variances_))
