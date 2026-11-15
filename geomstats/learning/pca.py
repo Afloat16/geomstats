@@ -266,9 +266,9 @@ class TangentPCA(_BasePCA):
 
         if self.space.point_ndim > 1:
             if self._uses_symmetric_coordinates:
-                scores = SymmetricMatrices(
-                    self.space.shape[-1]
-                ).matrix_representation(scores)
+                scores = SymmetricMatrices(self.space.shape[-1]).matrix_representation(
+                    scores
+                )
             else:
                 scores = gs.reshape(scores, (len(scores), *self.space.shape))
         return self._geometry.exp(scores, self.base_point_)
