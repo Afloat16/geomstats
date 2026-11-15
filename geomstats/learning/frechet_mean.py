@@ -1007,8 +1007,8 @@ def FrechetMean(space, **kwargs):
     Estimator = GeneralFrechetMean
     if method == "auto":
         kwargs.pop("method", None)
-        if _is_graph_space(space):
-            method = AACFrechetMean
+        if _is_graph_space(space) and hasattr(space, "aligner"):
+            Estimator = AACFrechetMean
 
         elif _is_geodesic_metric(space.metric):
             Estimator = SturmsMean
