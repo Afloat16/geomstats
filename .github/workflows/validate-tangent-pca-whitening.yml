@@ -62,7 +62,22 @@ jobs:
           PY
       - name: Run complete affected learning and geometry modules
         run: |
-          python -m pytest -q tests/tests_geomstats/test_learning tests/tests_geomstats/test_geometry/test_euclidean.py tests/tests_geomstats/test_geometry/test_hypersphere.py -m 'not (slow or redundant)' --junitxml=candidate-tests.xml
+          python - <<'PY'
+          import random
+          import sys
+          import geomstats.backend as gs
+          import pytest
+
+          # Seed the repository's randomized geometry fixtures before collection.
+          random.seed(0)
+          gs.random.seed(0)
+          sys.exit(pytest.main([
+              "-q", "tests/tests_geomstats/test_learning",
+              "tests/tests_geomstats/test_geometry/test_euclidean.py",
+              "tests/tests_geomstats/test_geometry/test_hypersphere.py",
+              "-m", "not (slow or redundant)", "--junitxml=candidate-tests.xml",
+          ]))
+          PY
       - name: Check formatting, hooks, and exact candidate source
         run: |
           ruff check geomstats/learning/pca.py tests/tests_geomstats/test_learning/test_pca_whitening.py
