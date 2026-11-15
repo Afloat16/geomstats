@@ -141,7 +141,9 @@ class GaussianMixtureModel:
 
         variances_flatten = variances_expanded.flatten()
 
-        distances = -(self.space.metric.dist_broadcast(data, self.means) ** 2)
+        distances = -self.space.metric.dist(
+            gs.expand_dims(data, 1), gs.expand_dims(self.means, 0)
+        ) ** 2
         distances = gs.reshape(distances, (data.shape[0] * self.variances.shape[0],))
 
         num = gs.exp(distances / (2 * variances_flatten**2))
@@ -230,7 +232,9 @@ class GaussianMixtureModel:
             Probability density function computed for each point of
             the mesh data, for each component of the GMM.
         """
-        distance_to_mean = self.space.metric.dist_broadcast(mesh_data, self.means)
+        distance_to_mean = self.space.metric.dist(
+            gs.expand_dims(mesh_data, 1), gs.expand_dims(self.means, 0)
+        )
 
         variances_units = gs.expand_dims(self.variances, 0)
         variances_units = gs.repeat(variances_units, distance_to_mean.shape[0], axis=0)
@@ -381,7 +385,9 @@ class RiemannianEM(TransformerMixin, ClusterMixin, BaseEstimator):
             Probability of a given sample to belong to a component
             of the GMM, computed for all components.
         """
-        dist_means_data = self.space.metric.dist_broadcast(data, self._model.means) ** 2
+        dist_means_data = self.space.metric.dist(
+            gs.expand_dims(data, 1), gs.expand_dims(self._model.means, 0)
+        ) ** 2
 
         weighted_dist_means_data = (dist_means_data * posterior_probabilities).sum(
             0
