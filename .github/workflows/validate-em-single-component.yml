@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
         with:
-          ref: b03b3e1946766f38307c286881caa2633b9cc02c
+          ref: 324ecd6e21f24bb64caf6505b3276535f9b8b293
           fetch-depth: 10
           persist-credentials: false
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
@@ -86,4 +86,4 @@ jobs:
           pre-commit run --files geomstats/learning/expectation_maximization.py tests/tests_geomstats/test_learning/test_em_single_component.py
           git diff --exit-code -- geomstats/learning/expectation_maximization.py tests/tests_geomstats/test_learning/test_em_single_component.py
           git diff --check 2fc8e25eb8955767292552f9c0c1438be362ba8f...HEAD
-          test "$(git rev-parse HEAD)" = "b03b3e1946766f38307c286881caa2633b9cc02c"
+          test "$(git rev-parse HEAD)" = "324ecd6e21f24bb64caf6505b3276535f9b8b293"
