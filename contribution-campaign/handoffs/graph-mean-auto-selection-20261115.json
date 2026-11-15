@@ -1,0 +1,422 @@
+{
+  "repository": "geomstats/geomstats",
+  "fork": "Afloat16/geomstats",
+  "status": "validated_commit_upstream_pr_blocked",
+  "base": "2fc8e25eb8955767292552f9c0c1438be362ba8f",
+  "base_branch": "main",
+  "commit": "82f2541d9e306d8cb623190ee02b245d02fd3384",
+  "branch": "fix/graph-frechet-mean-auto-selection-20261115",
+  "title": "Select aligned Frechet means automatically for equipped graph spaces",
+  "body": "## Problem\n\nThe graph branch in `FrechetMean(method=\"auto\")` assigns `AACFrechetMean` to the unused `method` local instead of the estimator factory. It therefore averages adjacency matrices without aligning their node labels. Equivalent relabelings can change the inferred graph mean, and AAC-specific options raise constructor errors.\n\n## Change\n\nSelect `AACFrechetMean` for graph spaces with an alignment structure. Graph spaces without an aligner continue to use their ordinary labeled-space mean, and an explicit `method=\"linear\"` still requests the arithmetic mean. The explicit AAC route is unchanged.\n\n## Validation\n\nThe same 12 new regression/control cases on unchanged base `2fc8e25eb8955767292552f9c0c1438be362ba8f` report **6 failures and 6 passes** on each backend. They fit real three-node undirected and four-node directed attributed graphs with independent node relabelings. Expected graph means are checked against an exhaustive NumPy permutation oracle, independent of the library aligner. Tests cover default/explicit auto, explicit AAC, labeled-graph means, caller input preservation, and AAC initialization/storage options.\n\nAt exact source `82f2541d9e306d8cb623190ee02b245d02fd3384`, all learning tests plus graph-space, Euclidean and matrix geometry tests report:\n\n- NumPy: **947 passed, 5 skipped, 414 deselected, 3 xfailed, 4 xpassed**.\n- Autograd: **949 passed, 3 skipped, 414 deselected, 2 xfailed, 5 xpassed**.\n- Ruff and applicable pre-commit hooks pass; source and diff checks pass.\n\n[Exact-source CI](https://github.com/Afloat16/geomstats/actions/runs/43674326692). Existing slow/redundant markers are excluded. Python 3.13.18 with the NumPy and Autograd backends; the full repository and PyTorch backend were not run.\n\n## Related work\n\nReviewed #2120, which introduced the factory branch, #1965's graph-space refactor, the AAC discussion in #2119, relevant all-state graph/mean history, and all six prior author PRs. Of 50 pre-existing fork heads, 17 contain the same unused-local assignment and 33 predate this factory; none contains this repair.\n",
+  "validation_url": "https://github.com/Afloat16/geomstats/actions/runs/43674326692",
+  "validation_commit": "ac612168bdc521e56c1f16095d3a97139d83f5ee",
+  "tests": {
+    "new_cases": 12,
+    "baseline_each_backend": {
+      "failed": 6,
+      "passed": 6,
+      "errors": 0
+    },
+    "numpy": {
+      "passed": 947,
+      "skipped": 5,
+      "deselected": 414,
+      "xfailed": 3,
+      "xpassed": 4
+    },
+    "autograd": {
+      "passed": 949,
+      "skipped": 3,
+      "deselected": 414,
+      "xfailed": 2,
+      "xpassed": 5
+    },
+    "scope": "All learning tests plus graph-space, Euclidean and matrix geometry; excluding slow/redundant.",
+    "style": "Ruff, configured pre-commit hooks, source cleanliness and diff checks pass."
+  },
+  "dedup": {
+    "old_fork_heads": [
+      {
+        "name": "ChristineWan",
+        "sha": "d7596ce009fad5f09661ce8a6e88761150e3d005",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "alicehw1",
+        "sha": "e315040c46f4638504271a948183057890cfc84e",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "amil-geodesic-regression-rat-skull",
+        "sha": "d4d9958ee2b98aaaf766bb15210f46b3a7a0b225",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "amil-regression-notebook",
+        "sha": "c28bcd108388c39b5518ab0cba12d180e578285b",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "amil-viz",
+        "sha": "0733714f9bbc2e653d6f8ab7bc91db63e37fe803",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "benedict",
+        "sha": "e1378c71167e542d7cc47925990f38686db28a68",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "beta_dist",
+        "sha": "bbb28c9addcec3d0985078a42389cc5a20fdbb10",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "citations",
+        "sha": "bf2b0315b4651fe6e345f5171bd263746eb0ff18",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "fix/affine-lognormal-mean-20261029",
+        "sha": "9a40304efba500d1139efeff66ef7ac23ff27316",
+        "factory_present": true,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": true
+      },
+      {
+        "name": "fix/brownian-batch-axis-20261029",
+        "sha": "fd6e11e2320a6dc8e1d696f60da7904bd3c098b5",
+        "factory_present": true,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": true
+      },
+      {
+        "name": "fix/figshare-complete-archive-cache",
+        "sha": "0b338cc1b6ebf4abf2cfb7782220854be8377be2",
+        "factory_present": true,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": true
+      },
+      {
+        "name": "fix/geometric-median-coincident-weights-20261112",
+        "sha": "e865dfbe8934e9de4152a66654995d9212bc7249",
+        "factory_present": true,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": true
+      },
+      {
+        "name": "fix/kernel-ragged-neighborhood-weights-20261112",
+        "sha": "65f725088a78be684df61116ebe2caa60a3b1818",
+        "factory_present": true,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": true
+      },
+      {
+        "name": "fix/kmeans-initial-centers",
+        "sha": "aac790187ec2b88738fb6083e1ed21ac8f85f98f",
+        "factory_present": true,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": true
+      },
+      {
+        "name": "fix/kmedoids-distinct-initial-centers-20261112",
+        "sha": "eb23501978ad491dbd5d739eb99fad05a739afce",
+        "factory_present": true,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": true
+      },
+      {
+        "name": "fix/kmedoids-final-labels-20261029",
+        "sha": "6ad346dec2b776f9d335470f29eb6bd20be329cf",
+        "factory_present": true,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": true
+      },
+      {
+        "name": "fix/kmedoids-prediction-precision-batching-20261112",
+        "sha": "dc72d8c9bf3a0f25b7cc387f4e12175cc6bacb0c",
+        "factory_present": true,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": true
+      },
+      {
+        "name": "fix/model-adapter-refit-shape-20261112",
+        "sha": "bf9574510a73dcf62b2a1b1efa61ae27111b6264",
+        "factory_present": true,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": true
+      },
+      {
+        "name": "fix/neighbor-parameter-refresh-20261112",
+        "sha": "fc28fc17f6c88529292e7c465b4e58188bda18bf",
+        "factory_present": true,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": true
+      },
+      {
+        "name": "fix/positive-real-log-ratio-stability-20261112",
+        "sha": "be02f029d3ce9523e762f3d0983b411ea8ce334f",
+        "factory_present": true,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": true
+      },
+      {
+        "name": "fix/radial-kernel-exponential-stability-20261112",
+        "sha": "581e9b562590eefdd7f05db1c6107922d5daf2e1",
+        "factory_present": true,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": true
+      },
+      {
+        "name": "fix/tangent-skew-matrix-dimensions-20261112",
+        "sha": "31a7ef06343383056d28ad2417699f1d6abf95f2",
+        "factory_present": true,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": true
+      },
+      {
+        "name": "fix/wrapped-gp-prior-dimensions-20261112",
+        "sha": "aed77bccc862467b5f754d99959155b166d88f65",
+        "factory_present": true,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": true
+      },
+      {
+        "name": "fix-product-metric-parallel-transport",
+        "sha": "e4040edb7ab8120b7e2267fa2458821c0df3e8bf",
+        "factory_present": true,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": true
+      },
+      {
+        "name": "geomviz-se",
+        "sha": "4c8b1299390fdf43c4df0fe8264ad028c3a828e8",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "geomvizhw",
+        "sha": "6f695254f336953ef2b61de69543c96b25f055bd",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "geomvizhwmodified",
+        "sha": "6f695254f336953ef2b61de69543c96b25f055bd",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "grassmannian",
+        "sha": "e414579b7e17c7545b35f217d7c999b1c7527edf",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "johmathe-add-makefile",
+        "sha": "e5c3a242b636f83d08d20fb7cb30424a2f33b376",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "johmathe-jax",
+        "sha": "548f3cf8eff4a111dcbbf8d10baa7bcf2095da00",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "johmathe-parallel-tests",
+        "sha": "38fd937dd5cfee3851c30579f635767d7d670d55",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "johmathe-remove-tensorflow",
+        "sha": "4aeeedf35e7445ee3542f7a4645962f2bea0fdae",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "klein-bottle",
+        "sha": "77f539b35cb570400245ca5179a553f5b2a814f5",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "laurenviz",
+        "sha": "36dbd828cb1c8b0ee13b3d90ac64fd18fd6c413b",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "main",
+        "sha": "9941df0a37d900d540b7869d8c2898fca46266c8",
+        "factory_present": true,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": true
+      },
+      {
+        "name": "ninamiolane/backend",
+        "sha": "25eb4f4f5c33b07b35c88717f984c86be728facf",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "ninamiolane/params-ai",
+        "sha": "fc82e0341cc2efd7fae961d9f9fbb892c79fe88c",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "ninamiolane/shape",
+        "sha": "9a3c8aba3e735bdbe83c82b4077c25b5cac5235b",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "ninamiolane/testing-by-claude",
+        "sha": "3a4eaa3f170c3afbe344668e4d53961525aa2a57",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "ninamiolane-contributing",
+        "sha": "edbae641fa1b1e53eb0f55936dc2bf1c484c519b",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "ninamiolane-updatelogo",
+        "sha": "08e646f9b86e6e534180bd8bf5b118fe7274ec69",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "poly_regression",
+        "sha": "15ee12c0998fb6e324bc4de4a6116e1a6ae1cecb",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "revert-1121-pytest-mig",
+        "sha": "52248a6a226388bd0ede1f62a53e93fbebdf28ca",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "revert-1451-nguigs-exp-log",
+        "sha": "7b20675fedd02e016100ae1e29e8ce8997e60158",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "revert-1551-a02_connection_bis",
+        "sha": "a9584d2745b9b3adb8728a2a347b8027cc56f73c",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "sam",
+        "sha": "9c22230069b83c8df7fa207b33407b261da67273",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "special_linear",
+        "sha": "5d8cab433b093c676c711d989bc45d38feed0269",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "stable",
+        "sha": "3e05560c5146c873af2f123b4ce0b07c3c8f7e3a",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "test-SE-viz",
+        "sha": "904bd092588851ee7912885810dad3b5a8aaf08b",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      },
+      {
+        "name": "yq_zhao",
+        "sha": "bd02e716ec35acd51f427d75457bb9c9dbcc7f0f",
+        "factory_present": false,
+        "graph_auto_selects_estimator": false,
+        "graph_auto_assigns_unused_method": false
+      }
+    ],
+    "related_prs": [
+      2120,
+      1965,
+      1608,
+      1601
+    ],
+    "related_issue": 2119,
+    "own_prs": [
+      2217,
+      2209,
+      2149,
+      2148,
+      2147,
+      2131
+    ]
+  },
+  "creation_restriction": {
+    "same_upstream_prior_attempt": "geomstats matrix-coordinate contribution",
+    "error": {
+      "error": "GitHub API error 403: {\"message\":\"Resource not accessible by integration\",\"documentation_url\":\"https://docs.github.com/rest/pulls/pulls#create-a-pull-request\",\"status\":\"403\"}",
+      "error_code": "FORBIDDEN",
+      "error_data": {
+        "message": "Resource not accessible by integration",
+        "documentation_url": "https://docs.github.com/rest/pulls/pulls#create-a-pull-request",
+        "status": "403"
+      }
+    },
+    "note": "The same upstream installation permission is still unavailable; this candidate has a complete prefilled fallback. No new upstream PR is claimed."
+  },
+  "new_upstream_prs": 0,
+  "new_merged_prs": 0,
+  "prefilled_url": "https://github.com/geomstats/geomstats/compare/main...Afloat16:fix/graph-frechet-mean-auto-selection-20261115?expand=1&title=Select%20aligned%20Frechet%20means%20automatically%20for%20equipped%20graph%20spaces&body=%23%23%20Problem%0A%0AThe%20graph%20branch%20in%20%60FrechetMean%28method%3D%22auto%22%29%60%20assigns%20%60AACFrechetMean%60%20to%20the%20unused%20%60method%60%20local%20instead%20of%20the%20estimator%20factory.%20It%20therefore%20averages%20adjacency%20matrices%20without%20aligning%20their%20node%20labels.%20Equivalent%20relabelings%20can%20change%20the%20inferred%20graph%20mean%2C%20and%20AAC-specific%20options%20raise%20constructor%20errors.%0A%0A%23%23%20Change%0A%0ASelect%20%60AACFrechetMean%60%20for%20graph%20spaces%20with%20an%20alignment%20structure.%20Graph%20spaces%20without%20an%20aligner%20continue%20to%20use%20their%20ordinary%20labeled-space%20mean%2C%20and%20an%20explicit%20%60method%3D%22linear%22%60%20still%20requests%20the%20arithmetic%20mean.%20The%20explicit%20AAC%20route%20is%20unchanged.%0A%0A%23%23%20Validation%0A%0AThe%20same%2012%20new%20regression%2Fcontrol%20cases%20on%20unchanged%20base%20%602fc8e25eb8955767292552f9c0c1438be362ba8f%60%20report%20%2A%2A6%20failures%20and%206%20passes%2A%2A%20on%20each%20backend.%20They%20fit%20real%20three-node%20undirected%20and%20four-node%20directed%20attributed%20graphs%20with%20independent%20node%20relabelings.%20Expected%20graph%20means%20are%20checked%20against%20an%20exhaustive%20NumPy%20permutation%20oracle%2C%20independent%20of%20the%20library%20aligner.%20Tests%20cover%20default%2Fexplicit%20auto%2C%20explicit%20AAC%2C%20labeled-graph%20means%2C%20caller%20input%20preservation%2C%20and%20AAC%20initialization%2Fstorage%20options.%0A%0AAt%20exact%20source%20%6082f2541d9e306d8cb623190ee02b245d02fd3384%60%2C%20all%20learning%20tests%20plus%20graph-space%2C%20Euclidean%20and%20matrix%20geometry%20tests%20report%3A%0A%0A-%20NumPy%3A%20%2A%2A947%20passed%2C%205%20skipped%2C%20414%20deselected%2C%203%20xfailed%2C%204%20xpassed%2A%2A.%0A-%20Autograd%3A%20%2A%2A949%20passed%2C%203%20skipped%2C%20414%20deselected%2C%202%20xfailed%2C%205%20xpassed%2A%2A.%0A-%20Ruff%20and%20applicable%20pre-commit%20hooks%20pass%3B%20source%20and%20diff%20checks%20pass.%0A%0A%5BExact-source%20CI%5D%28https%3A%2F%2Fgithub.com%2FAfloat16%2Fgeomstats%2Factions%2Fruns%2F43674326692%29.%20Existing%20slow%2Fredundant%20markers%20are%20excluded.%20Python%203.13.18%20with%20the%20NumPy%20and%20Autograd%20backends%3B%20the%20full%20repository%20and%20PyTorch%20backend%20were%20not%20run.%0A%0A%23%23%20Related%20work%0A%0AReviewed%20%232120%2C%20which%20introduced%20the%20factory%20branch%2C%20%231965%27s%20graph-space%20refactor%2C%20the%20AAC%20discussion%20in%20%232119%2C%20relevant%20all-state%20graph%2Fmean%20history%2C%20and%20all%20six%20prior%20author%20PRs.%20Of%2050%20pre-existing%20fork%20heads%2C%2017%20contain%20the%20same%20unused-local%20assignment%20and%2033%20predate%20this%20factory%3B%20none%20contains%20this%20repair.%0A"
+}
