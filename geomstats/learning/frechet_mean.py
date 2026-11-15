@@ -219,6 +219,9 @@ class BatchGradientDescent(BaseGradientDescent):
         if weights is None:
             weights = gs.ones((n_points, n_batch))
 
+        sum_weights = gs.sum(weights, axis=0, keepdims=True)
+        weights = weights / gs.where(sum_weights == 0, 1.0, sum_weights)
+
         flat_shape = (n_batch * n_points,) + point_shape
         estimates = points[0] if self.init_point is None else self.init_point
         points_flattened = gs.reshape(points, (n_points * n_batch,) + point_shape)
@@ -236,7 +239,7 @@ class BatchGradientDescent(BaseGradientDescent):
             tangent_grad = space.metric.log(points_flattened, estimates_flattened)
             tangent_grad = gs.reshape(tangent_grad, shape)
 
-            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points
+            tangent_mean = _batchscalarmulsum(weights, tangent_grad)
 
             next_estimates = space.metric.exp(step_size * tangent_mean, estimates)
             convergence = gs.sum(space.metric.squared_norm(tangent_mean, estimates))
@@ -968,6 +971,9 @@ class GeneralFrechetMean(_BaseMeanEstimator):
         the learning rate. The `batch` method is similar to the default
         method but for batches of equal length of samples. In this case,
         samples must be of shape [n_samples, n_batch, *space.shape].
+        Batch weights have shape [n_samples, n_batch] and are normalized
+        independently within each batch. A batch with zero total weight
+        retains its initial estimate.
         Optional, default: \'default\'.
 
     Attributes

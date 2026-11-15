@@ -116,6 +116,11 @@ class TangentPCA(_BasePCA):
     n_components : int
         Number of principal components.
         Optional, default: None.
+    whiten : bool
+        Normalize positive-variance principal coordinates to unit sample
+        variance. Zero-variance coordinates are left unscaled. Whitening
+        requires at least two samples.
+        Optional, default: False.
 
     Notes
     -----
@@ -158,6 +163,16 @@ class TangentPCA(_BasePCA):
 
         return self.space
 
+    @property
+    def _uses_symmetric_coordinates(self):
+        """Whether fitted features use the symmetric-matrix representation."""
+        n = self.space.shape[-1]
+        return (
+            self.space.point_ndim == 2
+            and self.space.shape[-2] == n
+            and self.n_features_ == n * (n + 1) // 2
+        )
+
     def fit(self, X, y=None, base_point=None):
         """Fit the model with X.
 
@@ -199,6 +214,10 @@ class TangentPCA(_BasePCA):
         """
         U, S, _ = self._fit(X, base_point=base_point)
 
+        if self.whiten:
+            # Use the same projection for rank-deficient data in both methods.
+            return self.transform(X)
+
         U = U[:, : self.n_components_]
 
         U *= S[: self.n_components_]
@@ -220,11 +239,12 @@ class TangentPCA(_BasePCA):
             Projected data.
         """
         tangent_vecs = self._geometry.log(X, base_point=self.base_point_)
-        if self.space.point_ndim == 2:
-            if (
-                gs.all(Matrices.is_square(tangent_vecs))
-                and Matrices.is_symmetric(tangent_vecs).all()
-            ):
+        if self.space.point_ndim > 1:
+            if self._uses_symmetric_coordinates:
+                if not gs.all(Matrices.is_symmetric(tangent_vecs)):
+                    raise ValueError(
+                        "Tangent vectors must be symmetric to match the fitted coordinates."
+                    )
                 X = SymmetricMatrices.basis_representation(tangent_vecs)
             else:
                 X = gs.reshape(tangent_vecs, (len(X), -1))
@@ -232,6 +252,8 @@ class TangentPCA(_BasePCA):
             X = tangent_vecs
         X = X - self.mean_
         X_transformed = gs.matmul(X, gs.transpose(self.components_))
+        if self.whiten:
+            X_transformed = X_transformed / self._whitening_scale
         return X_transformed
 
     def inverse_transform(self, X):
@@ -251,19 +273,24 @@ class TangentPCA(_BasePCA):
         X_original : array-like, shape=[..., n_features]
             Original data.
         """
+        if self.whiten:
+            X = X * self._whitening_scale
         scores = self.mean_ + gs.matmul(X, self.components_)
 
         if self.space.point_ndim > 1:
-            if gs.all(Matrices.is_square(self.base_point_)) and gs.all(
-                Matrices.is_symmetric(self.base_point_)
-            ):
-                scores = SymmetricMatrices(
-                    self.base_point_.shape[-1]
-                ).matrix_representation(scores)
+            if self._uses_symmetric_coordinates:
+                scores = SymmetricMatrices(self.space.shape[-1]).matrix_representation(
+                    scores
+                )
             else:
-                dim = self.base_point_.shape[-1]
-                scores = gs.reshape(scores, (len(scores), dim, dim))
+                scores = gs.reshape(scores, (len(scores), *self.space.shape))
         return self._geometry.exp(scores, self.base_point_)
+
+    @property
+    def _whitening_scale(self):
+        """Return fitted coordinate scales with a safe zero-variance extension."""
+        scale = gs.sqrt(self.explained_variance_)
+        return gs.where(scale == 0, 1.0, scale)
 
     def _fit(self, X, base_point=None):
         """Fit the model by computing full SVD on X.
@@ -304,6 +331,8 @@ class TangentPCA(_BasePCA):
             n_components = self.n_components
 
         n_samples, n_features = X.shape
+        if self.whiten and n_samples < 2:
+            raise ValueError("Whitening requires at least two samples.")
 
         if n_components == "mle":
             if n_samples < n_features:

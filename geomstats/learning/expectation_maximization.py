@@ -116,6 +116,19 @@ class GaussianMixtureModel:
 
         return variances, normalization_factor_var, phi_inv_var
 
+    def _component_distances(self, data):
+        """Compute every sample-component distance without squeezing batch axes."""
+        n_samples, n_components = data.shape[0], self.means.shape[0]
+        data_broadcast, means_broadcast = gs.broadcast_arrays(
+            gs.expand_dims(data, 1), gs.expand_dims(self.means, 0)
+        )
+        flat_shape = (n_samples * n_components,) + self.space.shape
+        distances = self.space.metric.dist(
+            gs.reshape(data_broadcast, flat_shape),
+            gs.reshape(means_broadcast, flat_shape),
+        )
+        return gs.reshape(distances, (n_samples, n_components))
+
     def pdf(self, data):
         """Return the separate probability density function of GMM.
 
@@ -134,27 +147,28 @@ class GaussianMixtureModel:
             Probability density function computed at each data
             sample and for each component of the GMM.
         """
-        data_length, _, _ = data.shape + (self.means.shape[0],)
+        return gs.exp(self.log_pdf(data))
 
-        variances_expanded = gs.expand_dims(self.variances, 0)
-        variances_expanded = gs.repeat(variances_expanded, data_length, 0)
+    def log_pdf(self, data):
+        """Return component log densities without exponentiating small values.
 
-        variances_flatten = variances_expanded.flatten()
+        Parameters
+        ----------
+        data : array-like, shape=[n_samples, dim]
+            Points at which the component log densities are computed.
 
-        distances = -(self.space.metric.dist_broadcast(data, self.means) ** 2)
-        distances = gs.reshape(distances, (data.shape[0] * self.variances.shape[0],))
-
-        num = gs.exp(distances / (2 * variances_flatten**2))
-
-        den = self._compute_normalization_factor()
-
-        den = gs.expand_dims(den, 0)
-        den = gs.repeat(den, data_length, axis=0).flatten()
-
-        pdf = num / den
-        pdf = gs.reshape(pdf, (data.shape[0], self.means.shape[0]))
-
-        return pdf
+        Returns
+        -------
+        log_pdf : array-like, shape=[n_samples, n_gaussians]
+            Log densities, without mixture coefficients.
+        """
+        squared_distances = self._component_distances(data) ** 2
+        squared_distances = gs.reshape(
+            squared_distances, (data.shape[0], self.means.shape[0])
+        )
+        return -squared_distances / (2 * self.variances**2) - gs.log(
+            self._compute_normalization_factor()
+        )
 
     def _compute_normalization_factor(self):
         """Find the normalization factor given some variances.
@@ -230,28 +244,7 @@ class GaussianMixtureModel:
             Probability density function computed for each point of
             the mesh data, for each component of the GMM.
         """
-        distance_to_mean = self.space.metric.dist_broadcast(mesh_data, self.means)
-
-        variances_units = gs.expand_dims(self.variances, 0)
-        variances_units = gs.repeat(variances_units, distance_to_mean.shape[0], axis=0)
-
-        distribution_normal = gs.exp(-(distance_to_mean**2) / (2 * variances_units**2))
-
-        zeta_sigma = (2 * gs.pi) ** (2 / 3) * self.variances
-        zeta_sigma = zeta_sigma * gs.exp(
-            (self.variances**2 / 2) * gs.erf(self.variances / gs.sqrt(2))
-        )
-
-        result_num = gs.expand_dims(mixture_coefficients, 0)
-        result_num = gs.repeat(result_num, len(distribution_normal), axis=0)
-        result_num = result_num * distribution_normal
-
-        result_denum = gs.expand_dims(zeta_sigma, 0)
-        result_denum = gs.repeat(result_denum, len(distribution_normal), axis=0)
-
-        weighted_pdf = result_num / result_denum
-
-        return weighted_pdf
+        return self.pdf(mesh_data) * mixture_coefficients
 
 
 class RiemannianEM(TransformerMixin, ClusterMixin, BaseEstimator):
@@ -363,7 +356,8 @@ class RiemannianEM(TransformerMixin, ClusterMixin, BaseEstimator):
         data_expand = gs.repeat(data_expand, n_gaussians, axis=1)
 
         self.mean_estimator.fit(data_expand, weights=posterior_probabilities)
-        self._model.means = gs.squeeze(self.mean_estimator.estimate_)
+        # Keep the component axis even when the mixture has only one Gaussian.
+        self._model.means = self.mean_estimator.estimate_
 
         if gs.any(gs.isnan(self._model.means)):
             logger.warning("UPDATE : means contain not a number elements")
@@ -380,7 +374,7 @@ class RiemannianEM(TransformerMixin, ClusterMixin, BaseEstimator):
             Probability of a given sample to belong to a component
             of the GMM, computed for all components.
         """
-        dist_means_data = self.space.metric.dist_broadcast(data, self._model.means) ** 2
+        dist_means_data = self._model._component_distances(data) ** 2
 
         weighted_dist_means_data = (dist_means_data * posterior_probabilities).sum(
             0
@@ -402,22 +396,23 @@ class RiemannianEM(TransformerMixin, ClusterMixin, BaseEstimator):
             Training data, where n_samples is the number of samples and
             n_features is the number of features.
         """
-        pdf = self._model.pdf(data)
+        log_pdf = self._model.log_pdf(data)
 
-        if gs.any(gs.isnan(pdf)):
+        if gs.any(gs.isnan(log_pdf)):
             logger.warning(
                 "EXPECTATION : Probability distribution function"
                 "contain elements that are not numbers"
             )
 
-        num_normalized_pdf = gs.einsum("j,...j->...j", self.mixture_coefficients_, pdf)
-        valid_pdf_condition = gs.amin(gs.sum(num_normalized_pdf, -1))
-
-        if valid_pdf_condition <= PDF_TOL:
-            num_normalized_pdf[gs.sum(num_normalized_pdf, -1) <= PDF_TOL] = 1
-
-        sum_pdf = gs.sum(num_normalized_pdf, -1)
-        posterior_probabilities = scalarvecmul(1 / sum_pdf, num_normalized_pdf)
+        positive_weights = self.mixture_coefficients_ > 0
+        safe_weights = gs.where(positive_weights, self.mixture_coefficients_, 1.0)
+        log_weights = gs.where(positive_weights, gs.log(safe_weights), -float("inf"))
+        log_weighted_pdf = log_pdf + log_weights
+        log_weighted_pdf -= gs.amax(log_weighted_pdf, axis=-1, keepdims=True)
+        scaled_pdf = gs.exp(log_weighted_pdf)
+        posterior_probabilities = scalarvecmul(
+            1 / gs.sum(scaled_pdf, axis=-1), scaled_pdf
+        )
 
         if gs.any(gs.mean(posterior_probabilities)) is None:
             logger.warning(
@@ -437,6 +432,10 @@ class RiemannianEM(TransformerMixin, ClusterMixin, BaseEstimator):
                 "EXPECTATION : Gaussian got no elements (precision error) reinitialize"
             )
             posterior_probabilities[posterior_probabilities == 0] = PDF_TOL
+            posterior_probabilities = scalarvecmul(
+                1 / gs.sum(posterior_probabilities, axis=-1),
+                posterior_probabilities,
+            )
 
         return posterior_probabilities
 

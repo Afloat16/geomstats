@@ -1,0 +1,32 @@
+{
+  "base": "2fc8e25eb8955767292552f9c0c1438be362ba8f",
+  "counted_as_new_contribution": false,
+  "source_commits": [
+    {
+      "key": "matrix_coordinates",
+      "sha": "c8772938c30ca073463ea4341a1ee9d2f1717aaf"
+    },
+    {
+      "key": "whitening",
+      "sha": "98f18d4f99993d067bbbc5d30e742f100dc3af7e"
+    },
+    {
+      "key": "em_sample_component_axes",
+      "sha": "324ecd6e21f24bb64caf6505b3276535f9b8b293"
+    },
+    {
+      "key": "em_log_density_normalization",
+      "sha": "8a4664cb115cedf0900eaf5c926253c692c9b2d7"
+    },
+    {
+      "key": "batch_weight_normalization",
+      "sha": "5a7b9f83781a14b1424ed769444b99dacd3ce2ca"
+    }
+  ],
+  "resolution": [
+    "Compose the matrix-coordinate branches and whitening scaling in TangentPCA transform/inverse_transform.",
+    "Keep the EM component-distance helper and singleton mean shape; use that helper within log_pdf. pdf and weighted_pdf delegate to log_pdf-derived densities.",
+    "Retain the normalized batch weights and all independent regression files. No upstream contribution branch is modified."
+  ],
+  "scope": "Integration-only fork branch; does not create an upstream PR or add to the independent contribution count."
+}
