@@ -116,6 +116,11 @@ class TangentPCA(_BasePCA):
     n_components : int
         Number of principal components.
         Optional, default: None.
+    whiten : bool
+        Normalize positive-variance principal coordinates to unit sample
+        variance. Zero-variance coordinates are left unscaled. Whitening
+        requires at least two samples.
+        Optional, default: False.
 
     Notes
     -----
@@ -199,6 +204,10 @@ class TangentPCA(_BasePCA):
         """
         U, S, _ = self._fit(X, base_point=base_point)
 
+        if self.whiten:
+            # Use the same projection for rank-deficient data in both methods.
+            return self.transform(X)
+
         U = U[:, : self.n_components_]
 
         U *= S[: self.n_components_]
@@ -232,6 +241,8 @@ class TangentPCA(_BasePCA):
             X = tangent_vecs
         X = X - self.mean_
         X_transformed = gs.matmul(X, gs.transpose(self.components_))
+        if self.whiten:
+            X_transformed = X_transformed / self._whitening_scale
         return X_transformed
 
     def inverse_transform(self, X):
@@ -251,6 +262,8 @@ class TangentPCA(_BasePCA):
         X_original : array-like, shape=[..., n_features]
             Original data.
         """
+        if self.whiten:
+            X = X * self._whitening_scale
         scores = self.mean_ + gs.matmul(X, self.components_)
 
         if self.space.point_ndim > 1:
@@ -264,6 +277,12 @@ class TangentPCA(_BasePCA):
                 dim = self.base_point_.shape[-1]
                 scores = gs.reshape(scores, (len(scores), dim, dim))
         return self._geometry.exp(scores, self.base_point_)
+
+    @property
+    def _whitening_scale(self):
+        """Return fitted coordinate scales with a safe zero-variance extension."""
+        scale = gs.sqrt(self.explained_variance_)
+        return gs.where(scale == 0, 1.0, scale)
 
     def _fit(self, X, base_point=None):
         """Fit the model by computing full SVD on X.
@@ -304,6 +323,8 @@ class TangentPCA(_BasePCA):
             n_components = self.n_components
 
         n_samples, n_features = X.shape
+        if self.whiten and n_samples < 2:
+            raise ValueError("Whitening requires at least two samples.")
 
         if n_components == "mle":
             if n_samples < n_features:
