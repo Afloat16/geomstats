@@ -1,0 +1,791 @@
+{
+  "upstream_base": "2fc8e25eb8955767292552f9c0c1438be362ba8f",
+  "old_fork_heads": [
+    {
+      "name": "ChristineWan",
+      "sha": "d7596ce009fad5f09661ce8a6e88761150e3d005"
+    },
+    {
+      "name": "alicehw1",
+      "sha": "e315040c46f4638504271a948183057890cfc84e"
+    },
+    {
+      "name": "amil-geodesic-regression-rat-skull",
+      "sha": "d4d9958ee2b98aaaf766bb15210f46b3a7a0b225"
+    },
+    {
+      "name": "amil-regression-notebook",
+      "sha": "c28bcd108388c39b5518ab0cba12d180e578285b"
+    },
+    {
+      "name": "amil-viz",
+      "sha": "0733714f9bbc2e653d6f8ab7bc91db63e37fe803"
+    },
+    {
+      "name": "benedict",
+      "sha": "e1378c71167e542d7cc47925990f38686db28a68"
+    },
+    {
+      "name": "beta_dist",
+      "sha": "bbb28c9addcec3d0985078a42389cc5a20fdbb10"
+    },
+    {
+      "name": "citations",
+      "sha": "bf2b0315b4651fe6e345f5171bd263746eb0ff18"
+    },
+    {
+      "name": "fix/affine-lognormal-mean-20261029",
+      "sha": "9a40304efba500d1139efeff66ef7ac23ff27316"
+    },
+    {
+      "name": "fix/brownian-batch-axis-20261029",
+      "sha": "fd6e11e2320a6dc8e1d696f60da7904bd3c098b5"
+    },
+    {
+      "name": "fix/figshare-complete-archive-cache",
+      "sha": "0b338cc1b6ebf4abf2cfb7782220854be8377be2"
+    },
+    {
+      "name": "fix/geometric-median-coincident-weights-20261112",
+      "sha": "e865dfbe8934e9de4152a66654995d9212bc7249"
+    },
+    {
+      "name": "fix/kernel-ragged-neighborhood-weights-20261112",
+      "sha": "65f725088a78be684df61116ebe2caa60a3b1818"
+    },
+    {
+      "name": "fix/kmeans-initial-centers",
+      "sha": "aac790187ec2b88738fb6083e1ed21ac8f85f98f"
+    },
+    {
+      "name": "fix/kmedoids-distinct-initial-centers-20261112",
+      "sha": "eb23501978ad491dbd5d739eb99fad05a739afce"
+    },
+    {
+      "name": "fix/kmedoids-final-labels-20261029",
+      "sha": "6ad346dec2b776f9d335470f29eb6bd20be329cf"
+    },
+    {
+      "name": "fix/kmedoids-prediction-precision-batching-20261112",
+      "sha": "dc72d8c9bf3a0f25b7cc387f4e12175cc6bacb0c"
+    },
+    {
+      "name": "fix/model-adapter-refit-shape-20261112",
+      "sha": "bf9574510a73dcf62b2a1b1efa61ae27111b6264"
+    },
+    {
+      "name": "fix/neighbor-parameter-refresh-20261112",
+      "sha": "fc28fc17f6c88529292e7c465b4e58188bda18bf"
+    },
+    {
+      "name": "fix/positive-real-log-ratio-stability-20261112",
+      "sha": "be02f029d3ce9523e762f3d0983b411ea8ce334f"
+    },
+    {
+      "name": "fix/radial-kernel-exponential-stability-20261112",
+      "sha": "581e9b562590eefdd7f05db1c6107922d5daf2e1"
+    },
+    {
+      "name": "fix/tangent-skew-matrix-dimensions-20261112",
+      "sha": "31a7ef06343383056d28ad2417699f1d6abf95f2"
+    },
+    {
+      "name": "fix/wrapped-gp-prior-dimensions-20261112",
+      "sha": "aed77bccc862467b5f754d99959155b166d88f65"
+    },
+    {
+      "name": "fix-product-metric-parallel-transport",
+      "sha": "e4040edb7ab8120b7e2267fa2458821c0df3e8bf"
+    },
+    {
+      "name": "geomviz-se",
+      "sha": "4c8b1299390fdf43c4df0fe8264ad028c3a828e8"
+    },
+    {
+      "name": "geomvizhw",
+      "sha": "6f695254f336953ef2b61de69543c96b25f055bd"
+    },
+    {
+      "name": "geomvizhwmodified",
+      "sha": "6f695254f336953ef2b61de69543c96b25f055bd"
+    },
+    {
+      "name": "grassmannian",
+      "sha": "e414579b7e17c7545b35f217d7c999b1c7527edf"
+    },
+    {
+      "name": "johmathe-add-makefile",
+      "sha": "e5c3a242b636f83d08d20fb7cb30424a2f33b376"
+    },
+    {
+      "name": "johmathe-jax",
+      "sha": "548f3cf8eff4a111dcbbf8d10baa7bcf2095da00"
+    },
+    {
+      "name": "johmathe-parallel-tests",
+      "sha": "38fd937dd5cfee3851c30579f635767d7d670d55"
+    },
+    {
+      "name": "johmathe-remove-tensorflow",
+      "sha": "4aeeedf35e7445ee3542f7a4645962f2bea0fdae"
+    },
+    {
+      "name": "klein-bottle",
+      "sha": "77f539b35cb570400245ca5179a553f5b2a814f5"
+    },
+    {
+      "name": "laurenviz",
+      "sha": "36dbd828cb1c8b0ee13b3d90ac64fd18fd6c413b"
+    },
+    {
+      "name": "main",
+      "sha": "9941df0a37d900d540b7869d8c2898fca46266c8"
+    },
+    {
+      "name": "ninamiolane/backend",
+      "sha": "25eb4f4f5c33b07b35c88717f984c86be728facf"
+    },
+    {
+      "name": "ninamiolane/params-ai",
+      "sha": "fc82e0341cc2efd7fae961d9f9fbb892c79fe88c"
+    },
+    {
+      "name": "ninamiolane/shape",
+      "sha": "9a3c8aba3e735bdbe83c82b4077c25b5cac5235b"
+    },
+    {
+      "name": "ninamiolane/testing-by-claude",
+      "sha": "3a4eaa3f170c3afbe344668e4d53961525aa2a57"
+    },
+    {
+      "name": "ninamiolane-contributing",
+      "sha": "edbae641fa1b1e53eb0f55936dc2bf1c484c519b"
+    },
+    {
+      "name": "ninamiolane-updatelogo",
+      "sha": "08e646f9b86e6e534180bd8bf5b118fe7274ec69"
+    },
+    {
+      "name": "poly_regression",
+      "sha": "15ee12c0998fb6e324bc4de4a6116e1a6ae1cecb"
+    },
+    {
+      "name": "revert-1121-pytest-mig",
+      "sha": "52248a6a226388bd0ede1f62a53e93fbebdf28ca"
+    },
+    {
+      "name": "revert-1451-nguigs-exp-log",
+      "sha": "7b20675fedd02e016100ae1e29e8ce8997e60158"
+    },
+    {
+      "name": "revert-1551-a02_connection_bis",
+      "sha": "a9584d2745b9b3adb8728a2a347b8027cc56f73c"
+    },
+    {
+      "name": "sam",
+      "sha": "9c22230069b83c8df7fa207b33407b261da67273"
+    },
+    {
+      "name": "special_linear",
+      "sha": "5d8cab433b093c676c711d989bc45d38feed0269"
+    },
+    {
+      "name": "stable",
+      "sha": "3e05560c5146c873af2f123b4ce0b07c3c8f7e3a"
+    },
+    {
+      "name": "test-SE-viz",
+      "sha": "904bd092588851ee7912885810dad3b5a8aaf08b"
+    },
+    {
+      "name": "yq_zhao",
+      "sha": "bd02e716ec35acd51f427d75457bb9c9dbcc7f0f"
+    }
+  ],
+  "own_prs": [
+    {
+      "number": 2217,
+      "title": "Publish Figshare archives only after a complete validated download",
+      "url": "https://github.com/geomstats/geomstats/pull/2217"
+    },
+    {
+      "number": 2209,
+      "title": "Correct k-means seeding and preserve caller-provided centers",
+      "url": "https://github.com/geomstats/geomstats/pull/2209"
+    },
+    {
+      "number": 2149,
+      "title": "Center affine-invariant SPD lognormal samples at the supplied mean",
+      "url": "https://github.com/geomstats/geomstats/pull/2149"
+    },
+    {
+      "number": 2148,
+      "title": "Assign fitted k-medoids labels from the final centers",
+      "url": "https://github.com/geomstats/geomstats/pull/2148"
+    },
+    {
+      "number": 2147,
+      "title": "Preserve batch axes in Brownian sample paths",
+      "url": "https://github.com/geomstats/geomstats/pull/2147"
+    },
+    {
+      "number": 2131,
+      "title": "Propagate product metric parallel transport to factors",
+      "url": "https://github.com/geomstats/geomstats/pull/2131"
+    }
+  ],
+  "batch_weight_audit": [
+    {
+      "name": "ChristineWan",
+      "sha": "d7596ce009fad5f09661ce8a6e88761150e3d005",
+      "exists": true,
+      "denominator": [
+        "        tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points",
+        "    sum_weights = gs.sum(weights)",
+        "    var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "    current_tangent_mean = _scalarmulsum(weights, logs)",
+        "    current_tangent_mean /= sum_weights",
+        "        var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "        next_tangent_mean = _scalarmulsum(weights, logs)",
+        "        next_tangent_mean /= sum_weights"
+      ]
+    },
+    {
+      "name": "alicehw1",
+      "sha": "e315040c46f4638504271a948183057890cfc84e",
+      "exists": true,
+      "denominator": [
+        "        tangent_mean = gs.einsum(einsum_str, weights, tangent_grad) / n_points",
+        "    sum_weights = gs.sum(weights)",
+        "    var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / gs.sum(weights)",
+        "    current_tangent_mean /= sum_weights",
+        "        next_tangent_mean /= sum_weights"
+      ]
+    },
+    {
+      "name": "amil-geodesic-regression-rat-skull",
+      "sha": "d4d9958ee2b98aaaf766bb15210f46b3a7a0b225",
+      "exists": true,
+      "denominator": [
+        "            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points"
+      ]
+    },
+    {
+      "name": "amil-regression-notebook",
+      "sha": "c28bcd108388c39b5518ab0cba12d180e578285b",
+      "exists": true,
+      "denominator": [
+        "            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points"
+      ]
+    },
+    {
+      "name": "amil-viz",
+      "sha": "0733714f9bbc2e653d6f8ab7bc91db63e37fe803",
+      "exists": true,
+      "denominator": [
+        "        tangent_mean = gs.einsum(einsum_str, weights, tangent_grad) / n_points",
+        "    sum_weights = gs.sum(weights)",
+        "    var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / gs.sum(weights)",
+        "    current_tangent_mean /= sum_weights",
+        "        next_tangent_mean /= sum_weights"
+      ]
+    },
+    {
+      "name": "benedict",
+      "sha": "e1378c71167e542d7cc47925990f38686db28a68",
+      "exists": true,
+      "denominator": [
+        "        tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points",
+        "    sum_weights = gs.sum(weights)",
+        "    var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "    current_tangent_mean = _scalarmulsum(weights, logs)",
+        "    current_tangent_mean /= sum_weights",
+        "        var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "        next_tangent_mean = _scalarmulsum(weights, logs)",
+        "        next_tangent_mean /= sum_weights"
+      ]
+    },
+    {
+      "name": "beta_dist",
+      "sha": "bbb28c9addcec3d0985078a42389cc5a20fdbb10",
+      "exists": true,
+      "denominator": [
+        "        tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points",
+        "    sum_weights = gs.sum(weights)",
+        "    var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "    current_tangent_mean = _scalarmulsum(weights, logs)",
+        "    current_tangent_mean /= sum_weights",
+        "        var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "        next_tangent_mean = _scalarmulsum(weights, logs)",
+        "        next_tangent_mean /= sum_weights"
+      ]
+    },
+    {
+      "name": "citations",
+      "sha": "bf2b0315b4651fe6e345f5171bd263746eb0ff18",
+      "exists": true,
+      "denominator": [
+        "        tangent_mean = gs.einsum(einsum_str, weights, tangent_grad) / n_points",
+        "    sum_weights = gs.sum(weights)",
+        "    var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / gs.sum(weights)",
+        "    current_tangent_mean /= sum_weights",
+        "        next_tangent_mean /= sum_weights"
+      ]
+    },
+    {
+      "name": "fix/affine-lognormal-mean-20261029",
+      "sha": "9a40304efba500d1139efeff66ef7ac23ff27316",
+      "exists": true,
+      "denominator": [
+        "            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points"
+      ]
+    },
+    {
+      "name": "fix/brownian-batch-axis-20261029",
+      "sha": "fd6e11e2320a6dc8e1d696f60da7904bd3c098b5",
+      "exists": true,
+      "denominator": [
+        "            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points"
+      ]
+    },
+    {
+      "name": "fix/figshare-complete-archive-cache",
+      "sha": "0b338cc1b6ebf4abf2cfb7782220854be8377be2",
+      "exists": true,
+      "denominator": [
+        "            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points"
+      ]
+    },
+    {
+      "name": "fix/geometric-median-coincident-weights-20261112",
+      "sha": "e865dfbe8934e9de4152a66654995d9212bc7249",
+      "exists": true,
+      "denominator": [
+        "            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points"
+      ]
+    },
+    {
+      "name": "fix/kernel-ragged-neighborhood-weights-20261112",
+      "sha": "65f725088a78be684df61116ebe2caa60a3b1818",
+      "exists": true,
+      "denominator": [
+        "            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points"
+      ]
+    },
+    {
+      "name": "fix/kmeans-initial-centers",
+      "sha": "aac790187ec2b88738fb6083e1ed21ac8f85f98f",
+      "exists": true,
+      "denominator": [
+        "            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points"
+      ]
+    },
+    {
+      "name": "fix/kmedoids-distinct-initial-centers-20261112",
+      "sha": "eb23501978ad491dbd5d739eb99fad05a739afce",
+      "exists": true,
+      "denominator": [
+        "            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points"
+      ]
+    },
+    {
+      "name": "fix/kmedoids-final-labels-20261029",
+      "sha": "6ad346dec2b776f9d335470f29eb6bd20be329cf",
+      "exists": true,
+      "denominator": [
+        "            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points"
+      ]
+    },
+    {
+      "name": "fix/kmedoids-prediction-precision-batching-20261112",
+      "sha": "dc72d8c9bf3a0f25b7cc387f4e12175cc6bacb0c",
+      "exists": true,
+      "denominator": [
+        "            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points"
+      ]
+    },
+    {
+      "name": "fix/model-adapter-refit-shape-20261112",
+      "sha": "bf9574510a73dcf62b2a1b1efa61ae27111b6264",
+      "exists": true,
+      "denominator": [
+        "            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points"
+      ]
+    },
+    {
+      "name": "fix/neighbor-parameter-refresh-20261112",
+      "sha": "fc28fc17f6c88529292e7c465b4e58188bda18bf",
+      "exists": true,
+      "denominator": [
+        "            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points"
+      ]
+    },
+    {
+      "name": "fix/positive-real-log-ratio-stability-20261112",
+      "sha": "be02f029d3ce9523e762f3d0983b411ea8ce334f",
+      "exists": true,
+      "denominator": [
+        "            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points"
+      ]
+    },
+    {
+      "name": "fix/radial-kernel-exponential-stability-20261112",
+      "sha": "581e9b562590eefdd7f05db1c6107922d5daf2e1",
+      "exists": true,
+      "denominator": [
+        "            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points"
+      ]
+    },
+    {
+      "name": "fix/tangent-skew-matrix-dimensions-20261112",
+      "sha": "31a7ef06343383056d28ad2417699f1d6abf95f2",
+      "exists": true,
+      "denominator": [
+        "            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points"
+      ]
+    },
+    {
+      "name": "fix/wrapped-gp-prior-dimensions-20261112",
+      "sha": "aed77bccc862467b5f754d99959155b166d88f65",
+      "exists": true,
+      "denominator": [
+        "            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points"
+      ]
+    },
+    {
+      "name": "fix-product-metric-parallel-transport",
+      "sha": "e4040edb7ab8120b7e2267fa2458821c0df3e8bf",
+      "exists": true,
+      "denominator": [
+        "            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points"
+      ]
+    },
+    {
+      "name": "geomviz-se",
+      "sha": "4c8b1299390fdf43c4df0fe8264ad028c3a828e8",
+      "exists": true,
+      "denominator": [
+        "        tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points",
+        "    sum_weights = gs.sum(weights)",
+        "    var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "    current_tangent_mean = _scalarmulsum(weights, logs)",
+        "    current_tangent_mean /= sum_weights",
+        "        var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "        next_tangent_mean = _scalarmulsum(weights, logs)",
+        "        next_tangent_mean /= sum_weights"
+      ]
+    },
+    {
+      "name": "geomvizhw",
+      "sha": "6f695254f336953ef2b61de69543c96b25f055bd",
+      "exists": true,
+      "denominator": [
+        "        tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points",
+        "    sum_weights = gs.sum(weights)",
+        "    var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "    current_tangent_mean = _scalarmulsum(weights, logs)",
+        "    current_tangent_mean /= sum_weights",
+        "        var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "        next_tangent_mean = _scalarmulsum(weights, logs)",
+        "        next_tangent_mean /= sum_weights"
+      ]
+    },
+    {
+      "name": "geomvizhwmodified",
+      "sha": "6f695254f336953ef2b61de69543c96b25f055bd",
+      "exists": true,
+      "denominator": [
+        "        tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points",
+        "    sum_weights = gs.sum(weights)",
+        "    var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "    current_tangent_mean = _scalarmulsum(weights, logs)",
+        "    current_tangent_mean /= sum_weights",
+        "        var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "        next_tangent_mean = _scalarmulsum(weights, logs)",
+        "        next_tangent_mean /= sum_weights"
+      ]
+    },
+    {
+      "name": "grassmannian",
+      "sha": "e414579b7e17c7545b35f217d7c999b1c7527edf",
+      "exists": true,
+      "denominator": [
+        "        tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points",
+        "    sum_weights = gs.sum(weights)",
+        "    var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "    current_tangent_mean = _scalarmulsum(weights, logs)",
+        "    current_tangent_mean /= sum_weights",
+        "        var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "        next_tangent_mean = _scalarmulsum(weights, logs)",
+        "        next_tangent_mean /= sum_weights"
+      ]
+    },
+    {
+      "name": "johmathe-add-makefile",
+      "sha": "e5c3a242b636f83d08d20fb7cb30424a2f33b376",
+      "exists": true,
+      "denominator": [
+        "        tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points",
+        "    sum_weights = gs.sum(weights)",
+        "    var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "    current_tangent_mean = _scalarmulsum(weights, logs)",
+        "    current_tangent_mean /= sum_weights",
+        "        var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "        next_tangent_mean = _scalarmulsum(weights, logs)",
+        "        next_tangent_mean /= sum_weights"
+      ]
+    },
+    {
+      "name": "johmathe-jax",
+      "sha": "548f3cf8eff4a111dcbbf8d10baa7bcf2095da00",
+      "exists": true,
+      "denominator": [
+        "    sum_weights = gs.sum(weights)",
+        "    var /= sum_weights",
+        "    sum_weights = gs.sum(weights)",
+        "    mean = gs.sum(weighted_points, axis=0) / sum_weights",
+        "    sum_weights = gs.sum(weights)",
+        "        tangent_mean /= sum_weights",
+        "        barycenter = (points * weights).sum(0, keepdims=True) / weights.sum(0)",
+        "    sum_weights = gs.sum(weights)",
+        "    current_tangent_mean /= sum_weights",
+        "        next_tangent_mean /= sum_weights"
+      ]
+    },
+    {
+      "name": "johmathe-parallel-tests",
+      "sha": "38fd937dd5cfee3851c30579f635767d7d670d55",
+      "exists": true,
+      "denominator": [
+        "        tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points",
+        "    sum_weights = gs.sum(weights)",
+        "    var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "    current_tangent_mean = _scalarmulsum(weights, logs)",
+        "    current_tangent_mean /= sum_weights",
+        "        var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "        next_tangent_mean = _scalarmulsum(weights, logs)",
+        "        next_tangent_mean /= sum_weights"
+      ]
+    },
+    {
+      "name": "johmathe-remove-tensorflow",
+      "sha": "4aeeedf35e7445ee3542f7a4645962f2bea0fdae",
+      "exists": true,
+      "denominator": [
+        "        tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points",
+        "    sum_weights = gs.sum(weights)",
+        "    var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "    current_tangent_mean = _scalarmulsum(weights, logs)",
+        "    current_tangent_mean /= sum_weights",
+        "        var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "        next_tangent_mean = _scalarmulsum(weights, logs)",
+        "        next_tangent_mean /= sum_weights"
+      ]
+    },
+    {
+      "name": "klein-bottle",
+      "sha": "77f539b35cb570400245ca5179a553f5b2a814f5",
+      "exists": true,
+      "denominator": [
+        "        tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points",
+        "    sum_weights = gs.sum(weights)",
+        "    var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "    current_tangent_mean = _scalarmulsum(weights, logs)",
+        "    current_tangent_mean /= sum_weights",
+        "        var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "        next_tangent_mean = _scalarmulsum(weights, logs)",
+        "        next_tangent_mean /= sum_weights"
+      ]
+    },
+    {
+      "name": "laurenviz",
+      "sha": "36dbd828cb1c8b0ee13b3d90ac64fd18fd6c413b",
+      "exists": true,
+      "denominator": [
+        "        tangent_mean = gs.einsum(einsum_str, weights, tangent_grad) / n_points",
+        "    sum_weights = gs.sum(weights)",
+        "    var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / gs.sum(weights)",
+        "    current_tangent_mean /= sum_weights",
+        "        next_tangent_mean /= sum_weights"
+      ]
+    },
+    {
+      "name": "main",
+      "sha": "9941df0a37d900d540b7869d8c2898fca46266c8",
+      "exists": true,
+      "denominator": [
+        "            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points"
+      ]
+    },
+    {
+      "name": "ninamiolane/backend",
+      "sha": "25eb4f4f5c33b07b35c88717f984c86be728facf",
+      "exists": true,
+      "denominator": [
+        "            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points"
+      ]
+    },
+    {
+      "name": "ninamiolane/params-ai",
+      "sha": "fc82e0341cc2efd7fae961d9f9fbb892c79fe88c",
+      "exists": true,
+      "denominator": [
+        "            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points"
+      ]
+    },
+    {
+      "name": "ninamiolane/shape",
+      "sha": "9a3c8aba3e735bdbe83c82b4077c25b5cac5235b",
+      "exists": true,
+      "denominator": [
+        "            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points"
+      ]
+    },
+    {
+      "name": "ninamiolane/testing-by-claude",
+      "sha": "3a4eaa3f170c3afbe344668e4d53961525aa2a57",
+      "exists": true,
+      "denominator": [
+        "            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points"
+      ]
+    },
+    {
+      "name": "ninamiolane-contributing",
+      "sha": "edbae641fa1b1e53eb0f55936dc2bf1c484c519b",
+      "exists": true,
+      "denominator": [
+        "        tangent_mean = gs.einsum(einsum_str, weights, tangent_grad) / n_points",
+        "    sum_weights = gs.sum(weights)",
+        "    var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / gs.sum(weights)",
+        "    current_tangent_mean /= sum_weights",
+        "        next_tangent_mean /= sum_weights"
+      ]
+    },
+    {
+      "name": "ninamiolane-updatelogo",
+      "sha": "08e646f9b86e6e534180bd8bf5b118fe7274ec69",
+      "exists": true,
+      "denominator": [
+        "            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points"
+      ]
+    },
+    {
+      "name": "poly_regression",
+      "sha": "15ee12c0998fb6e324bc4de4a6116e1a6ae1cecb",
+      "exists": true,
+      "denominator": [
+        "        tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points",
+        "    sum_weights = gs.sum(weights)",
+        "    var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "    current_tangent_mean = _scalarmulsum(weights, logs)",
+        "    current_tangent_mean /= sum_weights",
+        "        var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "        next_tangent_mean = _scalarmulsum(weights, logs)",
+        "        next_tangent_mean /= sum_weights"
+      ]
+    },
+    {
+      "name": "revert-1121-pytest-mig",
+      "sha": "52248a6a226388bd0ede1f62a53e93fbebdf28ca",
+      "exists": true,
+      "denominator": [
+        "        tangent_mean = gs.einsum(einsum_str, weights, tangent_grad) / n_points",
+        "    sum_weights = gs.sum(weights)",
+        "    ) / gs.sum(weights)",
+        "    current_tangent_mean /= sum_weights",
+        "        ) / gs.sum(weights)",
+        "        next_tangent_mean /= sum_weights"
+      ]
+    },
+    {
+      "name": "revert-1451-nguigs-exp-log",
+      "sha": "7b20675fedd02e016100ae1e29e8ce8997e60158",
+      "exists": true,
+      "denominator": [
+        "        tangent_mean = gs.einsum(einsum_str, weights, tangent_grad) / n_points",
+        "    sum_weights = gs.sum(weights)",
+        "    var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / gs.sum(weights)",
+        "    current_tangent_mean /= sum_weights",
+        "        next_tangent_mean /= sum_weights"
+      ]
+    },
+    {
+      "name": "revert-1551-a02_connection_bis",
+      "sha": "a9584d2745b9b3adb8728a2a347b8027cc56f73c",
+      "exists": true,
+      "denominator": [
+        "        tangent_mean = gs.einsum(einsum_str, weights, tangent_grad) / n_points",
+        "    sum_weights = gs.sum(weights)",
+        "    var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / gs.sum(weights)",
+        "    current_tangent_mean /= sum_weights",
+        "        next_tangent_mean /= sum_weights"
+      ]
+    },
+    {
+      "name": "sam",
+      "sha": "9c22230069b83c8df7fa207b33407b261da67273",
+      "exists": true,
+      "denominator": [
+        "        tangent_mean = gs.einsum(einsum_str, weights, tangent_grad) / n_points",
+        "    sum_weights = gs.sum(weights)",
+        "    var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / gs.sum(weights)",
+        "    current_tangent_mean /= sum_weights",
+        "        next_tangent_mean /= sum_weights"
+      ]
+    },
+    {
+      "name": "special_linear",
+      "sha": "5d8cab433b093c676c711d989bc45d38feed0269",
+      "exists": true,
+      "denominator": [
+        "        tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points",
+        "    sum_weights = gs.sum(weights)",
+        "    var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "    current_tangent_mean = _scalarmulsum(weights, logs)",
+        "    current_tangent_mean /= sum_weights",
+        "        var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "        next_tangent_mean = _scalarmulsum(weights, logs)",
+        "        next_tangent_mean /= sum_weights"
+      ]
+    },
+    {
+      "name": "stable",
+      "sha": "3e05560c5146c873af2f123b4ce0b07c3c8f7e3a",
+      "exists": true,
+      "denominator": [
+        "            tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points"
+      ]
+    },
+    {
+      "name": "test-SE-viz",
+      "sha": "904bd092588851ee7912885810dad3b5a8aaf08b",
+      "exists": true,
+      "denominator": [
+        "        tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points",
+        "    sum_weights = gs.sum(weights)",
+        "    var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "    current_tangent_mean = _scalarmulsum(weights, logs)",
+        "    current_tangent_mean /= sum_weights",
+        "        var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "        next_tangent_mean = _scalarmulsum(weights, logs)",
+        "        next_tangent_mean /= sum_weights"
+      ]
+    },
+    {
+      "name": "yq_zhao",
+      "sha": "bd02e716ec35acd51f427d75457bb9c9dbcc7f0f",
+      "exists": true,
+      "denominator": [
+        "        tangent_mean = _batchscalarmulsum(weights, tangent_grad) / n_points",
+        "    sum_weights = gs.sum(weights)",
+        "    var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "    current_tangent_mean = _scalarmulsum(weights, logs)",
+        "    current_tangent_mean /= sum_weights",
+        "        var = gs.sum(metric.squared_norm(logs, current_mean) * weights) / sum_weights",
+        "        next_tangent_mean = _scalarmulsum(weights, logs)",
+        "        next_tangent_mean /= sum_weights"
+      ]
+    }
+  ],
+  "review_notes": "All original EM source files retain squeezed means and low-density fallback. No matching old patch found. The batch algorithm's raw source was inspected for each old head; johmathe-jax predates it."
+}

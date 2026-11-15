@@ -1,0 +1,78 @@
+{
+  "repository": "geomstats/geomstats",
+  "fork": "Afloat16/geomstats",
+  "status": "validated_commit_upstream_pr_blocked",
+  "base": "2fc8e25eb8955767292552f9c0c1438be362ba8f",
+  "base_branch": "main",
+  "new_upstream_prs": 0,
+  "new_merged_prs": 0,
+  "creation_restriction": {
+    "same_upstream_prior_attempt": "geomstats matrix-coordinate contribution",
+    "error": {
+      "error": "GitHub API error 403: {\"message\":\"Resource not accessible by integration\",\"documentation_url\":\"https://docs.github.com/rest/pulls/pulls#create-a-pull-request\",\"status\":\"403\"}",
+      "error_code": "FORBIDDEN",
+      "error_data": {
+        "message": "Resource not accessible by integration",
+        "documentation_url": "https://docs.github.com/rest/pulls/pulls#create-a-pull-request",
+        "status": "403"
+      }
+    },
+    "note": "The same upstream installation permission is still unavailable; this candidate has a complete prefilled fallback. No new upstream PR is claimed."
+  },
+  "environment": {
+    "python": "3.13.18",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "scikit_learn": "1.9.1",
+    "autograd": "1.9.1",
+    "ruff": "0.4.8"
+  },
+  "notes": "Each source branch is independent of the other new contributions. Validation workflows and campaign handoffs are kept outside the submission branch.",
+  "title": "Preserve sample and component axes throughout Riemannian EM",
+  "commit": "324ecd6e21f24bb64caf6505b3276535f9b8b293",
+  "branch": "fix/em-single-component-axis-20261115",
+  "validation_url": "https://github.com/Afloat16/geomstats/actions/runs/43672411380",
+  "validation_commit": "4a1fb289efb345cf12c080aa358d744aaf27d4eb",
+  "body": "## Problem\n\nA one-component fit loses its component axis when the updated mean is squeezed. Separately, `dist_broadcast` can take its elementwise shortcut when the sample and component counts coincide, instead of producing all sample/component distances. These shape errors break density evaluation and variance updates for valid small mixtures.\n\n## Change\n\nKeep the batch mean's component axis. Centralize component distances in a helper that explicitly broadcasts and flattens sample/component pairs before calling the metric, then restores the `(n_samples, n_components)` result. Use it in both density methods and the variance update. Flattening also respects metrics whose vectorization helpers expect one batch axis.\n\n## Validation\n\nThe same 13 regression/control cases on unchanged base `2fc8e25eb8955767292552f9c0c1438be362ba8f` report **10 failures and 3 passes** on both NumPy and Autograd. They cover actual random/k-means initialized fits, a single observation, one component, equal sample/component counts, 2→1→2 refits, and analytic Poincaré-diameter mean/density oracles.\n\nAt source `324ecd6e21f24bb64caf6505b3276535f9b8b293`, all learning tests plus Euclidean and Poincaré geometry tests, excluding the existing slow/redundant markers, report:\n\n- NumPy: **759 passed, 5 skipped, 362 deselected, 5 xfailed, 4 xpassed**.\n- Autograd: **761 passed, 3 skipped, 362 deselected, 4 xfailed, 5 xpassed**.\n- Ruff and applicable pre-commit hooks pass; the validated checkout remains clean.\n\n[Exact-source CI](https://github.com/Afloat16/geomstats/actions/runs/43672411380). Python 3.13.18, NumPy 2.5.4, SciPy 1.18.1, scikit-learn 1.9.1 and Autograd 1.9.1. The full repository and PyTorch backend were not run.\n\n## Scope and related work\n\nThis fixes sample/component shape handling. It does not change posterior normalization or batch-weight scaling. Reviewed the existing EM implementation and initialization history, including #564 and #841, all six prior author PRs, and the EM source at all 50 pre-existing fork heads; none contains this axis repair.\n",
+  "tests": {
+    "new_cases": 13,
+    "baseline_each_backend": {
+      "failed": 10,
+      "passed": 3,
+      "errors": 0
+    },
+    "numpy": {
+      "passed": 759,
+      "skipped": 5,
+      "deselected": 362,
+      "xfailed": 5,
+      "xpassed": 4
+    },
+    "autograd": {
+      "passed": 761,
+      "skipped": 3,
+      "deselected": 362,
+      "xfailed": 4,
+      "xpassed": 5
+    },
+    "style": "Ruff and applicable pre-commit hooks pass",
+    "scope": "All learning tests plus Euclidean and Poincare geometry, excluding slow/redundant markers"
+  },
+  "dedup": {
+    "own_prs": [
+      2217,
+      2209,
+      2149,
+      2148,
+      2147,
+      2131
+    ],
+    "old_fork_heads": 50,
+    "related_prs": [
+      564,
+      841
+    ],
+    "finding": "No prior source contains the component-axis repair."
+  },
+  "prefilled_url": "https://github.com/geomstats/geomstats/compare/main...Afloat16:fix/em-single-component-axis-20261115?expand=1&title=Preserve%20sample%20and%20component%20axes%20throughout%20Riemannian%20EM&body=%23%23%20Problem%0A%0AA%20one-component%20fit%20loses%20its%20component%20axis%20when%20the%20updated%20mean%20is%20squeezed.%20Separately%2C%20%60dist_broadcast%60%20can%20take%20its%20elementwise%20shortcut%20when%20the%20sample%20and%20component%20counts%20coincide%2C%20instead%20of%20producing%20all%20sample%2Fcomponent%20distances.%20These%20shape%20errors%20break%20density%20evaluation%20and%20variance%20updates%20for%20valid%20small%20mixtures.%0A%0A%23%23%20Change%0A%0AKeep%20the%20batch%20mean%27s%20component%20axis.%20Centralize%20component%20distances%20in%20a%20helper%20that%20explicitly%20broadcasts%20and%20flattens%20sample%2Fcomponent%20pairs%20before%20calling%20the%20metric%2C%20then%20restores%20the%20%60%28n_samples%2C%20n_components%29%60%20result.%20Use%20it%20in%20both%20density%20methods%20and%20the%20variance%20update.%20Flattening%20also%20respects%20metrics%20whose%20vectorization%20helpers%20expect%20one%20batch%20axis.%0A%0A%23%23%20Validation%0A%0AThe%20same%2013%20regression%2Fcontrol%20cases%20on%20unchanged%20base%20%602fc8e25eb8955767292552f9c0c1438be362ba8f%60%20report%20%2A%2A10%20failures%20and%203%20passes%2A%2A%20on%20both%20NumPy%20and%20Autograd.%20They%20cover%20actual%20random%2Fk-means%20initialized%20fits%2C%20a%20single%20observation%2C%20one%20component%2C%20equal%20sample%2Fcomponent%20counts%2C%202%E2%86%921%E2%86%922%20refits%2C%20and%20analytic%20Poincar%C3%A9-diameter%20mean%2Fdensity%20oracles.%0A%0AAt%20source%20%60324ecd6e21f24bb64caf6505b3276535f9b8b293%60%2C%20all%20learning%20tests%20plus%20Euclidean%20and%20Poincar%C3%A9%20geometry%20tests%2C%20excluding%20the%20existing%20slow%2Fredundant%20markers%2C%20report%3A%0A%0A-%20NumPy%3A%20%2A%2A759%20passed%2C%205%20skipped%2C%20362%20deselected%2C%205%20xfailed%2C%204%20xpassed%2A%2A.%0A-%20Autograd%3A%20%2A%2A761%20passed%2C%203%20skipped%2C%20362%20deselected%2C%204%20xfailed%2C%205%20xpassed%2A%2A.%0A-%20Ruff%20and%20applicable%20pre-commit%20hooks%20pass%3B%20the%20validated%20checkout%20remains%20clean.%0A%0A%5BExact-source%20CI%5D%28https%3A%2F%2Fgithub.com%2FAfloat16%2Fgeomstats%2Factions%2Fruns%2F43672411380%29.%20Python%203.13.18%2C%20NumPy%202.5.4%2C%20SciPy%201.18.1%2C%20scikit-learn%201.9.1%20and%20Autograd%201.9.1.%20The%20full%20repository%20and%20PyTorch%20backend%20were%20not%20run.%0A%0A%23%23%20Scope%20and%20related%20work%0A%0AThis%20fixes%20sample%2Fcomponent%20shape%20handling.%20It%20does%20not%20change%20posterior%20normalization%20or%20batch-weight%20scaling.%20Reviewed%20the%20existing%20EM%20implementation%20and%20initialization%20history%2C%20including%20%23564%20and%20%23841%2C%20all%20six%20prior%20author%20PRs%2C%20and%20the%20EM%20source%20at%20all%2050%20pre-existing%20fork%20heads%3B%20none%20contains%20this%20axis%20repair.%0A"
+}

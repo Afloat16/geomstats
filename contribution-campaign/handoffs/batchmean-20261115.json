@@ -1,0 +1,84 @@
+{
+  "repository": "geomstats/geomstats",
+  "fork": "Afloat16/geomstats",
+  "status": "validated_commit_upstream_pr_blocked",
+  "base": "2fc8e25eb8955767292552f9c0c1438be362ba8f",
+  "base_branch": "main",
+  "new_upstream_prs": 0,
+  "new_merged_prs": 0,
+  "creation_restriction": {
+    "same_upstream_prior_attempt": "geomstats matrix-coordinate contribution",
+    "error": {
+      "error": "GitHub API error 403: {\"message\":\"Resource not accessible by integration\",\"documentation_url\":\"https://docs.github.com/rest/pulls/pulls#create-a-pull-request\",\"status\":\"403\"}",
+      "error_code": "FORBIDDEN",
+      "error_data": {
+        "message": "Resource not accessible by integration",
+        "documentation_url": "https://docs.github.com/rest/pulls/pulls#create-a-pull-request",
+        "status": "403"
+      }
+    },
+    "note": "The same upstream installation permission is still unavailable; this candidate has a complete prefilled fallback. No new upstream PR is claimed."
+  },
+  "environment": {
+    "python": "3.13.18",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "scikit_learn": "1.9.1",
+    "autograd": "1.9.1",
+    "ruff": "0.4.8"
+  },
+  "notes": "Each source branch is independent of the other new contributions. Validation workflows and campaign handoffs are kept outside the submission branch.",
+  "title": "Normalize batch Frechet mean weights independently",
+  "body": "## Problem\n\nBatch gradient descent divides every weighted tangent sum by the number of observations. Rescaling one batch's weights therefore changes its effective step size and stopping criterion, even though its weighted mean is unchanged. Small component masses in Riemannian EM can stop at an inaccurate mean, while large scales can overshoot.\n\n## Change\n\nNormalize each batch's weight column once by its own sum, without modifying caller data. Then form the tangent mean directly from those normalized weights. Use a safe divisor for an all-zero column so the existing multi-sample zero-weight behavior stays finite. The unweighted case has the same mathematical update as before.\n\n## Validation\n\nOn unchanged base `2fc8e25eb8955767292552f9c0c1438be362ba8f`, the same 13 regression/control cases report **7 failures and 6 passes** on both NumPy and Autograd. Independent Euclidean/matrix weighted-average and Poincaré-diameter analytic oracles cover batch-specific scales from 1e-6 to 1e6, zero-weight controls, and preservation of caller points and weights. A real one-iteration Riemannian EM fit verifies a low-mass component's mean against all of its posterior weights.\n\nAt source `f9a632e5f79bf523f9439ef694c1fd2e6a96d2cd`, the learning and adjacent geometry test scope reports:\n\n- NumPy: **1,115 passed, 5 skipped, 548 deselected, 5 xfailed, 4 xpassed**.\n- Autograd: **1,117 passed, 3 skipped, 548 deselected, 5 xfailed, 4 xpassed**.\n- Ruff and applicable pre-commit hooks pass; the exact validated checkout remains clean.\n\n[Exact-source CI](https://github.com/Afloat16/geomstats/actions/runs/43673754415). Python 3.13.18, NumPy 2.5.4, SciPy 1.18.1, scikit-learn 1.9.1 and Autograd 1.9.1. Existing slow/redundant markers are excluded; the full repository and PyTorch backend were not run.\n\n## Scope and related work\n\nThe regression scope uses nonnegative weights. The pre-existing single-observation fast path and signed-weight validation are unchanged. This patch changes weight scaling in the batch optimizer; it does not change EM density normalization or component axes.\n\nReviewed all six prior author PRs and all 50 pre-existing fork heads. Forty-nine contain the unnormalized batch update; one predates the batch algorithm. Reviewed actual related changes including #1873 (refactor), #2156 (logging), and #2138 (input ownership in GeometricMedian and MDM). None implements per-batch weight normalization.\n",
+  "commit": "f9a632e5f79bf523f9439ef694c1fd2e6a96d2cd",
+  "branch": "fix/batch-frechet-weight-normalization-20261115",
+  "validation_url": "https://github.com/Afloat16/geomstats/actions/runs/43673754415",
+  "validation_commit": "7fb915f318106e832eb50c95add82dff5026065e",
+  "tests": {
+    "new_cases": 13,
+    "baseline_each_backend": {
+      "failed": 7,
+      "passed": 6,
+      "errors": 0
+    },
+    "numpy": {
+      "passed": 1115,
+      "skipped": 5,
+      "deselected": 548,
+      "xfailed": 5,
+      "xpassed": 4
+    },
+    "autograd": {
+      "passed": 1117,
+      "skipped": 3,
+      "deselected": 548,
+      "xfailed": 5,
+      "xpassed": 4
+    },
+    "style": "Ruff and applicable pre-commit hooks pass"
+  },
+  "dedup": {
+    "own_prs": [
+      2217,
+      2209,
+      2149,
+      2148,
+      2147,
+      2131
+    ],
+    "old_fork_heads": 50,
+    "old_sources_with_unnormalized_batch_update": 49,
+    "old_sources_predating_batch": 1,
+    "related_prs": [
+      1873,
+      2156,
+      2138,
+      934,
+      537,
+      422,
+      1642
+    ]
+  },
+  "independent_review": "Production normalization, broadcast dimensions, nonmutation, matrix and analytic Poincare tests independently reviewed. An overbroad zero-total-weight documentation statement was removed; signed-weight and single-sample edge semantics remain outside scope.",
+  "prefilled_url": "https://github.com/geomstats/geomstats/compare/main...Afloat16:fix/batch-frechet-weight-normalization-20261115?expand=1&title=Normalize%20batch%20Frechet%20mean%20weights%20independently&body=%23%23%20Problem%0A%0ABatch%20gradient%20descent%20divides%20every%20weighted%20tangent%20sum%20by%20the%20number%20of%20observations.%20Rescaling%20one%20batch%27s%20weights%20therefore%20changes%20its%20effective%20step%20size%20and%20stopping%20criterion%2C%20even%20though%20its%20weighted%20mean%20is%20unchanged.%20Small%20component%20masses%20in%20Riemannian%20EM%20can%20stop%20at%20an%20inaccurate%20mean%2C%20while%20large%20scales%20can%20overshoot.%0A%0A%23%23%20Change%0A%0ANormalize%20each%20batch%27s%20weight%20column%20once%20by%20its%20own%20sum%2C%20without%20modifying%20caller%20data.%20Then%20form%20the%20tangent%20mean%20directly%20from%20those%20normalized%20weights.%20Use%20a%20safe%20divisor%20for%20an%20all-zero%20column%20so%20the%20existing%20multi-sample%20zero-weight%20behavior%20stays%20finite.%20The%20unweighted%20case%20has%20the%20same%20mathematical%20update%20as%20before.%0A%0A%23%23%20Validation%0A%0AOn%20unchanged%20base%20%602fc8e25eb8955767292552f9c0c1438be362ba8f%60%2C%20the%20same%2013%20regression%2Fcontrol%20cases%20report%20%2A%2A7%20failures%20and%206%20passes%2A%2A%20on%20both%20NumPy%20and%20Autograd.%20Independent%20Euclidean%2Fmatrix%20weighted-average%20and%20Poincar%C3%A9-diameter%20analytic%20oracles%20cover%20batch-specific%20scales%20from%201e-6%20to%201e6%2C%20zero-weight%20controls%2C%20and%20preservation%20of%20caller%20points%20and%20weights.%20A%20real%20one-iteration%20Riemannian%20EM%20fit%20verifies%20a%20low-mass%20component%27s%20mean%20against%20all%20of%20its%20posterior%20weights.%0A%0AAt%20source%20%60f9a632e5f79bf523f9439ef694c1fd2e6a96d2cd%60%2C%20the%20learning%20and%20adjacent%20geometry%20test%20scope%20reports%3A%0A%0A-%20NumPy%3A%20%2A%2A1%2C115%20passed%2C%205%20skipped%2C%20548%20deselected%2C%205%20xfailed%2C%204%20xpassed%2A%2A.%0A-%20Autograd%3A%20%2A%2A1%2C117%20passed%2C%203%20skipped%2C%20548%20deselected%2C%205%20xfailed%2C%204%20xpassed%2A%2A.%0A-%20Ruff%20and%20applicable%20pre-commit%20hooks%20pass%3B%20the%20exact%20validated%20checkout%20remains%20clean.%0A%0A%5BExact-source%20CI%5D%28https%3A%2F%2Fgithub.com%2FAfloat16%2Fgeomstats%2Factions%2Fruns%2F43673754415%29.%20Python%203.13.18%2C%20NumPy%202.5.4%2C%20SciPy%201.18.1%2C%20scikit-learn%201.9.1%20and%20Autograd%201.9.1.%20Existing%20slow%2Fredundant%20markers%20are%20excluded%3B%20the%20full%20repository%20and%20PyTorch%20backend%20were%20not%20run.%0A%0A%23%23%20Scope%20and%20related%20work%0A%0AThe%20regression%20scope%20uses%20nonnegative%20weights.%20The%20pre-existing%20single-observation%20fast%20path%20and%20signed-weight%20validation%20are%20unchanged.%20This%20patch%20changes%20weight%20scaling%20in%20the%20batch%20optimizer%3B%20it%20does%20not%20change%20EM%20density%20normalization%20or%20component%20axes.%0A%0AReviewed%20all%20six%20prior%20author%20PRs%20and%20all%2050%20pre-existing%20fork%20heads.%20Forty-nine%20contain%20the%20unnormalized%20batch%20update%3B%20one%20predates%20the%20batch%20algorithm.%20Reviewed%20actual%20related%20changes%20including%20%231873%20%28refactor%29%2C%20%232156%20%28logging%29%2C%20and%20%232138%20%28input%20ownership%20in%20GeometricMedian%20and%20MDM%29.%20None%20implements%20per-batch%20weight%20normalization.%0A"
+}

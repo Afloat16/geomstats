@@ -1,0 +1,80 @@
+{
+  "repository": "geomstats/geomstats",
+  "fork": "Afloat16/geomstats",
+  "status": "validated_commit_upstream_pr_blocked",
+  "base": "2fc8e25eb8955767292552f9c0c1438be362ba8f",
+  "base_branch": "main",
+  "new_upstream_prs": 0,
+  "new_merged_prs": 0,
+  "creation_restriction": {
+    "same_upstream_prior_attempt": "geomstats matrix-coordinate contribution",
+    "error": {
+      "error": "GitHub API error 403: {\"message\":\"Resource not accessible by integration\",\"documentation_url\":\"https://docs.github.com/rest/pulls/pulls#create-a-pull-request\",\"status\":\"403\"}",
+      "error_code": "FORBIDDEN",
+      "error_data": {
+        "message": "Resource not accessible by integration",
+        "documentation_url": "https://docs.github.com/rest/pulls/pulls#create-a-pull-request",
+        "status": "403"
+      }
+    },
+    "note": "The same upstream installation permission is still unavailable; this candidate has a complete prefilled fallback. No new upstream PR is claimed."
+  },
+  "environment": {
+    "python": "3.13.18",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "scikit_learn": "1.9.1",
+    "autograd": "1.9.1",
+    "ruff": "0.4.8"
+  },
+  "notes": "Each source branch is independent of the other new contributions. Validation workflows and campaign handoffs are kept outside the submission branch.",
+  "title": "Normalize Riemannian EM posteriors in log space",
+  "commit": "8a4664cb115cedf0900eaf5c926253c692c9b2d7",
+  "branch": "fix/em-log-posterior-normalization-20261115",
+  "validation_url": "https://github.com/Afloat16/geomstats/actions/runs/43672417655",
+  "validation_commit": "87adfc3ef8e791fc6b5959250df206da83759afe",
+  "body": "## Problem\n\nThe E-step replaces every sufficiently low density with 1 before normalization. As a result, informative tail observations become uniform responsibilities, and truly underflowing PDFs cannot recover their Bayes ratios. The separate weighted-density method also duplicates an inconsistent normalizer, while the existing empty-component regularization can leave posterior rows summing above one.\n\n## Change\n\nAdd one manifold-normalized log-density calculation. Derive the public PDF from it and the weighted PDF from the same density. Compute responsibilities from log density plus safely evaluated log mixture weights, subtract each row's maximum, exponentiate and normalize. Preserve the existing empty-component epsilon regularization and normalize again afterward.\n\n## Validation\n\nThe same nine regression/control cases on unchanged base `2fc8e25eb8955767292552f9c0c1438be362ba8f` report **8 failures and 1 pass** on both NumPy and Autograd. Independent Poincaré-diameter and SciPy softmax oracles cover low density, actual PDF underflow, unequal component scales and ordinary-density controls. A real public fit checks that low-density observations retain the expected mixture proportions and separated means. Additional tests cover zero-weight components and the manifold normalizer in weighted density.\n\nAt source `8a4664cb115cedf0900eaf5c926253c692c9b2d7`, all learning tests plus Euclidean and Poincaré geometry tests, excluding existing slow/redundant markers, report:\n\n- NumPy: **755 passed, 5 skipped, 362 deselected, 7 xfailed, 2 xpassed**.\n- Autograd: **757 passed, 3 skipped, 362 deselected, 5 xfailed, 4 xpassed**.\n- Ruff and applicable pre-commit hooks pass; the validated checkout remains clean.\n\n[Exact-source CI](https://github.com/Afloat16/geomstats/actions/runs/43672417655). Python 3.13.18, NumPy 2.5.4, SciPy 1.18.1, scikit-learn 1.9.1 and Autograd 1.9.1. The full repository and PyTorch backend were not run.\n\n## Scope and related work\n\nThis contribution unifies density normalization and stable posterior calculation. It assumes a valid mixture with at least one positive weight and a finite log-density candidate for each sample; rejecting all-zero weights or infinite-distance inputs is outside this patch. Sample/component axis handling and batch mean weight scaling are separate changes.\n\nReviewed all six prior author PRs, relevant all-state posterior/underflow/weighted-density history, and the EM source at all 50 pre-existing fork heads. All retain the low-density fallback and lack this shared log-density path.\n",
+  "tests": {
+    "new_cases": 9,
+    "baseline_each_backend": {
+      "failed": 8,
+      "passed": 1,
+      "errors": 0
+    },
+    "numpy": {
+      "passed": 755,
+      "skipped": 5,
+      "deselected": 362,
+      "xfailed": 7,
+      "xpassed": 2
+    },
+    "autograd": {
+      "passed": 757,
+      "skipped": 3,
+      "deselected": 362,
+      "xfailed": 5,
+      "xpassed": 4
+    },
+    "style": "Ruff and applicable pre-commit hooks pass",
+    "scope": "All learning tests plus Euclidean and Poincare geometry, excluding slow/redundant markers"
+  },
+  "dedup": {
+    "own_prs": [
+      2217,
+      2209,
+      2149,
+      2148,
+      2147,
+      2131
+    ],
+    "old_fork_heads": 50,
+    "query_topics": [
+      "posterior",
+      "underflow",
+      "weighted_pdf",
+      "expectation maximization"
+    ],
+    "finding": "Existing old-fork EM files retain the threshold fallback and have no log_pdf implementation."
+  },
+  "prefilled_url": "https://github.com/geomstats/geomstats/compare/main...Afloat16:fix/em-log-posterior-normalization-20261115?expand=1&title=Normalize%20Riemannian%20EM%20posteriors%20in%20log%20space&body=%23%23%20Problem%0A%0AThe%20E-step%20replaces%20every%20sufficiently%20low%20density%20with%201%20before%20normalization.%20As%20a%20result%2C%20informative%20tail%20observations%20become%20uniform%20responsibilities%2C%20and%20truly%20underflowing%20PDFs%20cannot%20recover%20their%20Bayes%20ratios.%20The%20separate%20weighted-density%20method%20also%20duplicates%20an%20inconsistent%20normalizer%2C%20while%20the%20existing%20empty-component%20regularization%20can%20leave%20posterior%20rows%20summing%20above%20one.%0A%0A%23%23%20Change%0A%0AAdd%20one%20manifold-normalized%20log-density%20calculation.%20Derive%20the%20public%20PDF%20from%20it%20and%20the%20weighted%20PDF%20from%20the%20same%20density.%20Compute%20responsibilities%20from%20log%20density%20plus%20safely%20evaluated%20log%20mixture%20weights%2C%20subtract%20each%20row%27s%20maximum%2C%20exponentiate%20and%20normalize.%20Preserve%20the%20existing%20empty-component%20epsilon%20regularization%20and%20normalize%20again%20afterward.%0A%0A%23%23%20Validation%0A%0AThe%20same%20nine%20regression%2Fcontrol%20cases%20on%20unchanged%20base%20%602fc8e25eb8955767292552f9c0c1438be362ba8f%60%20report%20%2A%2A8%20failures%20and%201%20pass%2A%2A%20on%20both%20NumPy%20and%20Autograd.%20Independent%20Poincar%C3%A9-diameter%20and%20SciPy%20softmax%20oracles%20cover%20low%20density%2C%20actual%20PDF%20underflow%2C%20unequal%20component%20scales%20and%20ordinary-density%20controls.%20A%20real%20public%20fit%20checks%20that%20low-density%20observations%20retain%20the%20expected%20mixture%20proportions%20and%20separated%20means.%20Additional%20tests%20cover%20zero-weight%20components%20and%20the%20manifold%20normalizer%20in%20weighted%20density.%0A%0AAt%20source%20%608a4664cb115cedf0900eaf5c926253c692c9b2d7%60%2C%20all%20learning%20tests%20plus%20Euclidean%20and%20Poincar%C3%A9%20geometry%20tests%2C%20excluding%20existing%20slow%2Fredundant%20markers%2C%20report%3A%0A%0A-%20NumPy%3A%20%2A%2A755%20passed%2C%205%20skipped%2C%20362%20deselected%2C%207%20xfailed%2C%202%20xpassed%2A%2A.%0A-%20Autograd%3A%20%2A%2A757%20passed%2C%203%20skipped%2C%20362%20deselected%2C%205%20xfailed%2C%204%20xpassed%2A%2A.%0A-%20Ruff%20and%20applicable%20pre-commit%20hooks%20pass%3B%20the%20validated%20checkout%20remains%20clean.%0A%0A%5BExact-source%20CI%5D%28https%3A%2F%2Fgithub.com%2FAfloat16%2Fgeomstats%2Factions%2Fruns%2F43672417655%29.%20Python%203.13.18%2C%20NumPy%202.5.4%2C%20SciPy%201.18.1%2C%20scikit-learn%201.9.1%20and%20Autograd%201.9.1.%20The%20full%20repository%20and%20PyTorch%20backend%20were%20not%20run.%0A%0A%23%23%20Scope%20and%20related%20work%0A%0AThis%20contribution%20unifies%20density%20normalization%20and%20stable%20posterior%20calculation.%20It%20assumes%20a%20valid%20mixture%20with%20at%20least%20one%20positive%20weight%20and%20a%20finite%20log-density%20candidate%20for%20each%20sample%3B%20rejecting%20all-zero%20weights%20or%20infinite-distance%20inputs%20is%20outside%20this%20patch.%20Sample%2Fcomponent%20axis%20handling%20and%20batch%20mean%20weight%20scaling%20are%20separate%20changes.%0A%0AReviewed%20all%20six%20prior%20author%20PRs%2C%20relevant%20all-state%20posterior%2Funderflow%2Fweighted-density%20history%2C%20and%20the%20EM%20source%20at%20all%2050%20pre-existing%20fork%20heads.%20All%20retain%20the%20low-density%20fallback%20and%20lack%20this%20shared%20log-density%20path.%0A"
+}
