@@ -232,6 +232,10 @@ class TangentPCA(_BasePCA):
         tangent_vecs = self._geometry.log(X, base_point=self.base_point_)
         if self.space.point_ndim > 1:
             if self._uses_symmetric_coordinates:
+                if not gs.all(Matrices.is_symmetric(tangent_vecs)):
+                    raise ValueError(
+                        "Tangent vectors must be symmetric to match the fitted coordinates."
+                    )
                 X = SymmetricMatrices.basis_representation(tangent_vecs)
             else:
                 X = gs.reshape(tangent_vecs, (len(X), -1))

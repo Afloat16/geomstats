@@ -82,3 +82,22 @@ def test_transform_retains_fitted_matrix_coordinates():
 
     assert scores.shape == (1, space.dim)
     assert gs.allclose(estimator.inverse_transform(scores), query, atol=1e-10)
+
+
+@np_and_autograd_only
+def test_compressed_matrix_coordinates_reject_nonsymmetric_queries():
+    """Reject incompatible queries instead of discarding their lower triangle."""
+    space = Matrices(2, 2)
+    basis = gs.array(
+        [
+            [[1.0, 0.0], [0.0, 0.0]],
+            [[0.0, 1.0], [1.0, 0.0]],
+            [[0.0, 0.0], [0.0, 1.0]],
+        ]
+    )
+    points = gs.concatenate([basis, -basis], axis=0)
+    estimator = TangentPCA(space).fit(points, base_point=gs.zeros(space.shape))
+    query = gs.array([[[0.0, 1.0], [-1.0, 0.0]]])
+
+    with pytest.raises(ValueError, match="symmetric"):
+        estimator.transform(query)
