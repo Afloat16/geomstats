@@ -4,7 +4,11 @@ import numpy as np
 import pytest
 
 import geomstats.backend as gs
-from geomstats.learning.kalman_filter import KalmanFilter, Localization, LocalizationLinear
+from geomstats.learning.kalman_filter import (
+    KalmanFilter,
+    Localization,
+    LocalizationLinear,
+)
 
 
 @pytest.mark.parametrize("dtype,prior_scale", [(gs.float32, 1e12), (gs.float64, 1e20)])
