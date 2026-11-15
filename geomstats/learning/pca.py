@@ -158,6 +158,16 @@ class TangentPCA(_BasePCA):
 
         return self.space
 
+    @property
+    def _uses_symmetric_coordinates(self):
+        """Whether fitted features use the symmetric-matrix representation."""
+        n = self.space.shape[-1]
+        return (
+            self.space.point_ndim == 2
+            and self.space.shape[-2] == n
+            and self.n_features_ == n * (n + 1) // 2
+        )
+
     def fit(self, X, y=None, base_point=None):
         """Fit the model with X.
 
@@ -220,11 +230,8 @@ class TangentPCA(_BasePCA):
             Projected data.
         """
         tangent_vecs = self._geometry.log(X, base_point=self.base_point_)
-        if self.space.point_ndim == 2:
-            if (
-                gs.all(Matrices.is_square(tangent_vecs))
-                and Matrices.is_symmetric(tangent_vecs).all()
-            ):
+        if self.space.point_ndim > 1:
+            if self._uses_symmetric_coordinates:
                 X = SymmetricMatrices.basis_representation(tangent_vecs)
             else:
                 X = gs.reshape(tangent_vecs, (len(X), -1))
@@ -254,15 +261,12 @@ class TangentPCA(_BasePCA):
         scores = self.mean_ + gs.matmul(X, self.components_)
 
         if self.space.point_ndim > 1:
-            if gs.all(Matrices.is_square(self.base_point_)) and gs.all(
-                Matrices.is_symmetric(self.base_point_)
-            ):
+            if self._uses_symmetric_coordinates:
                 scores = SymmetricMatrices(
-                    self.base_point_.shape[-1]
+                    self.space.shape[-1]
                 ).matrix_representation(scores)
             else:
-                dim = self.base_point_.shape[-1]
-                scores = gs.reshape(scores, (len(scores), dim, dim))
+                scores = gs.reshape(scores, (len(scores), *self.space.shape))
         return self._geometry.exp(scores, self.base_point_)
 
     def _fit(self, X, base_point=None):
