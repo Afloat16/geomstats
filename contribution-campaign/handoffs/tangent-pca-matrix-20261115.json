@@ -1,0 +1,57 @@
+{
+  "repository": "geomstats/geomstats",
+  "status": "validated_commit_upstream_pr_blocked",
+  "title": "Preserve fitted matrix coordinates in TangentPCA transforms",
+  "body": "## Description\n\nTangentPCA chooses its matrix feature representation during fitting, but later operations infer that representation again from different data. A rotation-matrix model fitted at the identity stores full skew-matrix coordinates and then tries to reconstruct them as symmetric matrices because the identity is symmetric. Rectangular matrices are reshaped to squares. A symmetric query can also switch a model fitted with full matrix coordinates to a shorter feature vector.\n\nUse the fitted feature count and the manifold shape to distinguish full matrix coordinates from the compressed symmetric representation. Apply that same choice in both transform and inverse_transform, and reconstruct the manifold's actual shape. A model fitted with compressed symmetric coordinates explicitly rejects nonsymmetric tangent vectors instead of dropping their lower triangle. No new fitted state or dependency is introduced.\n\nThe regressions exercise actual fit_transform, transform and inverse_transform calls on SO(2), SO(3), 2-by-3 and 3-by-2 matrix spaces, and symmetric queries following a full-matrix fit.\n\n## Validation\n\n[Successful NumPy and Autograd validation](https://github.com/Afloat16/geomstats/actions/runs/43667286823) checks candidate `c8772938c30ca073463ea4341a1ee9d2f1717aaf` against base `2fc8e25eb8955767292552f9c0c1438be362ba8f`.\n\n- Restoring the original production file while retaining the new tests produces six expected failures on each backend: five matrix transformation/reconstruction regressions and the explicit-error guard.\n- All learning modules and the Matrices, SpecialOrthogonal and SPD geometry modules, excluding the repository's slow/redundant profiles:\n  - NumPy: 1,348 passed, 7 skipped, 1,724 deselected, 2 expected failures and 3 non-strict expected-failure cases that passed.\n  - Autograd: 1,351 passed, 5 skipped, 1,724 deselected, 4 expected failures and 1 non-strict expected-failure case that passed.\n- Configured Ruff 0.4.8 lint/format checks and all applicable changed-file pre-commit hooks pass.\n- The workflow restores the exact candidate source after the baseline comparison and verifies that checks do not modify it.\n\nPython 3.13.18, NumPy 2.5.4, Autograd 1.9.1, SciPy 1.18.1 and scikit-learn 1.9.1 on Ubuntu. The complete repository, slow profiles and PyTorch execution were not run. The independent validation workflow is kept off this contribution branch.\n\n## Related work\n\nThe existing TangentPCA proposals #1513 and #1878 address metric weighting of principal directions. This change preserves the fitted feature representation and does not alter that weighting. The earlier ToTangentSpace skew-coordinate dimension change affects a different class and is not included here.\n\n## Checklist\n\n- [x] Clear title and focused production change.\n- [x] Added native regression tests using public estimator methods.\n- [x] Vectorized transformations are preserved.\n- [x] Affected NumPy and Autograd test scopes pass.\n- [x] Formatting and applicable pre-commit hooks pass.\n- [x] Documented the fitted-coordinate helper and linked related work.\n- [ ] Complete repository test suite on every backend.\n",
+  "prefilled_url": "https://github.com/geomstats/geomstats/compare/main...Afloat16:fix/tangent-pca-matrix-reconstruction-20261115?expand=1&title=Preserve%20fitted%20matrix%20coordinates%20in%20TangentPCA%20transforms&body=%23%23%20Description%0A%0ATangentPCA%20chooses%20its%20matrix%20feature%20representation%20during%20fitting%2C%20but%20later%20operations%20infer%20that%20representation%20again%20from%20different%20data.%20A%20rotation-matrix%20model%20fitted%20at%20the%20identity%20stores%20full%20skew-matrix%20coordinates%20and%20then%20tries%20to%20reconstruct%20them%20as%20symmetric%20matrices%20because%20the%20identity%20is%20symmetric.%20Rectangular%20matrices%20are%20reshaped%20to%20squares.%20A%20symmetric%20query%20can%20also%20switch%20a%20model%20fitted%20with%20full%20matrix%20coordinates%20to%20a%20shorter%20feature%20vector.%0A%0AUse%20the%20fitted%20feature%20count%20and%20the%20manifold%20shape%20to%20distinguish%20full%20matrix%20coordinates%20from%20the%20compressed%20symmetric%20representation.%20Apply%20that%20same%20choice%20in%20both%20transform%20and%20inverse_transform%2C%20and%20reconstruct%20the%20manifold%27s%20actual%20shape.%20A%20model%20fitted%20with%20compressed%20symmetric%20coordinates%20explicitly%20rejects%20nonsymmetric%20tangent%20vectors%20instead%20of%20dropping%20their%20lower%20triangle.%20No%20new%20fitted%20state%20or%20dependency%20is%20introduced.%0A%0AThe%20regressions%20exercise%20actual%20fit_transform%2C%20transform%20and%20inverse_transform%20calls%20on%20SO%282%29%2C%20SO%283%29%2C%202-by-3%20and%203-by-2%20matrix%20spaces%2C%20and%20symmetric%20queries%20following%20a%20full-matrix%20fit.%0A%0A%23%23%20Validation%0A%0A%5BSuccessful%20NumPy%20and%20Autograd%20validation%5D%28https%3A%2F%2Fgithub.com%2FAfloat16%2Fgeomstats%2Factions%2Fruns%2F43667286823%29%20checks%20candidate%20%60c8772938c30ca073463ea4341a1ee9d2f1717aaf%60%20against%20base%20%602fc8e25eb8955767292552f9c0c1438be362ba8f%60.%0A%0A-%20Restoring%20the%20original%20production%20file%20while%20retaining%20the%20new%20tests%20produces%20six%20expected%20failures%20on%20each%20backend%3A%20five%20matrix%20transformation%2Freconstruction%20regressions%20and%20the%20explicit-error%20guard.%0A-%20All%20learning%20modules%20and%20the%20Matrices%2C%20SpecialOrthogonal%20and%20SPD%20geometry%20modules%2C%20excluding%20the%20repository%27s%20slow%2Fredundant%20profiles%3A%0A%20%20-%20NumPy%3A%201%2C348%20passed%2C%207%20skipped%2C%201%2C724%20deselected%2C%202%20expected%20failures%20and%203%20non-strict%20expected-failure%20cases%20that%20passed.%0A%20%20-%20Autograd%3A%201%2C351%20passed%2C%205%20skipped%2C%201%2C724%20deselected%2C%204%20expected%20failures%20and%201%20non-strict%20expected-failure%20case%20that%20passed.%0A-%20Configured%20Ruff%200.4.8%20lint%2Fformat%20checks%20and%20all%20applicable%20changed-file%20pre-commit%20hooks%20pass.%0A-%20The%20workflow%20restores%20the%20exact%20candidate%20source%20after%20the%20baseline%20comparison%20and%20verifies%20that%20checks%20do%20not%20modify%20it.%0A%0APython%203.13.18%2C%20NumPy%202.5.4%2C%20Autograd%201.9.1%2C%20SciPy%201.18.1%20and%20scikit-learn%201.9.1%20on%20Ubuntu.%20The%20complete%20repository%2C%20slow%20profiles%20and%20PyTorch%20execution%20were%20not%20run.%20The%20independent%20validation%20workflow%20is%20kept%20off%20this%20contribution%20branch.%0A%0A%23%23%20Related%20work%0A%0AThe%20existing%20TangentPCA%20proposals%20%231513%20and%20%231878%20address%20metric%20weighting%20of%20principal%20directions.%20This%20change%20preserves%20the%20fitted%20feature%20representation%20and%20does%20not%20alter%20that%20weighting.%20The%20earlier%20ToTangentSpace%20skew-coordinate%20dimension%20change%20affects%20a%20different%20class%20and%20is%20not%20included%20here.%0A%0A%23%23%20Checklist%0A%0A-%20%5Bx%5D%20Clear%20title%20and%20focused%20production%20change.%0A-%20%5Bx%5D%20Added%20native%20regression%20tests%20using%20public%20estimator%20methods.%0A-%20%5Bx%5D%20Vectorized%20transformations%20are%20preserved.%0A-%20%5Bx%5D%20Affected%20NumPy%20and%20Autograd%20test%20scopes%20pass.%0A-%20%5Bx%5D%20Formatting%20and%20applicable%20pre-commit%20hooks%20pass.%0A-%20%5Bx%5D%20Documented%20the%20fitted-coordinate%20helper%20and%20linked%20related%20work.%0A-%20%5B%20%5D%20Complete%20repository%20test%20suite%20on%20every%20backend.%0A",
+  "base": "2fc8e25eb8955767292552f9c0c1438be362ba8f",
+  "commit": "c8772938c30ca073463ea4341a1ee9d2f1717aaf",
+  "branch": "fix/tangent-pca-matrix-reconstruction-20261115",
+  "validation_url": "https://github.com/Afloat16/geomstats/actions/runs/43667286823",
+  "validation_commit": "a3438f93efb386641ae28b41859691f45660908f",
+  "tests": {
+    "baseline_each_backend": {
+      "failures": 6,
+      "errors": 0
+    },
+    "numpy": {
+      "passed": 1348,
+      "skipped": 7,
+      "deselected": 1724,
+      "xfailed": 2,
+      "xpassed": 3
+    },
+    "autograd": {
+      "passed": 1351,
+      "skipped": 5,
+      "deselected": 1724,
+      "xfailed": 4,
+      "xpassed": 1
+    },
+    "style": "Ruff 0.4.8 and applicable changed-file pre-commit hooks pass"
+  },
+  "dedup": {
+    "own_all_state_prs": 6,
+    "own_preexisting_branches": 50,
+    "actual_pca_branch_sources_checked": 17,
+    "related_prs_reviewed": [
+      1513,
+      1878,
+      1969,
+      551,
+      522,
+      510
+    ],
+    "separate_prior_work": "fix/tangent-skew-matrix-dimensions-20261112 changes preprocessing.ToTangentSpace, not TangentPCA"
+  },
+  "creation_error": {
+    "error": "GitHub API error 403: {\"message\":\"Resource not accessible by integration\",\"documentation_url\":\"https://docs.github.com/rest/pulls/pulls#create-a-pull-request\",\"status\":\"403\"}",
+    "error_code": "FORBIDDEN",
+    "error_data": {
+      "message": "Resource not accessible by integration",
+      "documentation_url": "https://docs.github.com/rest/pulls/pulls#create-a-pull-request",
+      "status": "403"
+    }
+  },
+  "notes": "Contribution branch contains only pca.py and its existing test module. Validation workflow and this handoff are separate."
+}
