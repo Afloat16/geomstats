@@ -972,8 +972,7 @@ class GeneralFrechetMean(_BaseMeanEstimator):
         method but for batches of equal length of samples. In this case,
         samples must be of shape [n_samples, n_batch, *space.shape].
         Batch weights have shape [n_samples, n_batch] and are normalized
-        independently within each batch. A batch with zero total weight
-        retains its initial estimate.
+        independently within each batch.
         Optional, default: \'default\'.
 
     Attributes
