@@ -392,9 +392,7 @@ class RiemannianEM(TransformerMixin, ClusterMixin, BaseEstimator):
 
         positive_weights = self.mixture_coefficients_ > 0
         safe_weights = gs.where(positive_weights, self.mixture_coefficients_, 1.0)
-        log_weights = gs.where(
-            positive_weights, gs.log(safe_weights), -float("inf")
-        )
+        log_weights = gs.where(positive_weights, gs.log(safe_weights), -float("inf"))
         log_weighted_pdf = log_pdf + log_weights
         log_weighted_pdf -= gs.amax(log_weighted_pdf, axis=-1, keepdims=True)
         scaled_pdf = gs.exp(log_weighted_pdf)
