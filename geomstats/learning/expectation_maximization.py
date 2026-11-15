@@ -363,7 +363,8 @@ class RiemannianEM(TransformerMixin, ClusterMixin, BaseEstimator):
         data_expand = gs.repeat(data_expand, n_gaussians, axis=1)
 
         self.mean_estimator.fit(data_expand, weights=posterior_probabilities)
-        self._model.means = gs.squeeze(self.mean_estimator.estimate_)
+        # Keep the component axis even when the mixture has only one Gaussian.
+        self._model.means = self.mean_estimator.estimate_
 
         if gs.any(gs.isnan(self._model.means)):
             logger.warning("UPDATE : means contain not a number elements")
