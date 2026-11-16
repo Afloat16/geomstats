@@ -474,10 +474,7 @@ class GammaMetric(RiemannianMetric):
             ]
         )
 
-        if batch_shape:
-            jac = gs.moveaxis(jac, -1, 0)
-
-        return jac
+        return gs.moveaxis(jac, (0, 1, 2, 3), (-4, -3, -2, -1))
 
 
 class GammaDistributionsRandomVariable(ScipyUnivariateRandomVariable):
