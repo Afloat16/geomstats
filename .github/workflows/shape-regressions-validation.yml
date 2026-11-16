@@ -17,11 +17,11 @@ jobs:
         candidate: [torch-initial-state]
         include:
           - candidate: torch-initial-state
-            sha: 7a0df35057bf2ef480895ea0cfd1d25e6c96207b
+            sha: 68d8da50704d676acf7d0d520f6438e1fb2d1668
             source: geomstats/numerics/optimization/_torch.py
             regression: tests/tests_geomstats/test_numerics/test_torch_optimizer_initial_state.py
             adjacent: tests/tests_geomstats/test_numerics/test_optimization.py
-            covered_lines: "[66,149]"
+            covered_lines: "[66,147]"
     env:
       GEOMSTATS_BACKEND: ${{ matrix.backend }}
       PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
@@ -31,7 +31,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ matrix.sha }}
-          fetch-depth: 3
+          fetch-depth: 5
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
