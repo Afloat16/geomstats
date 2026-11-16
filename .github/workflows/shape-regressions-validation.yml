@@ -1,4 +1,4 @@
-name: Validate callable IVP steps and reproduce BVP callback mismatch
+name: Validate BVP callback conversion and endpoint broadcasting
 
 on:
   push:
@@ -14,14 +14,20 @@ jobs:
       fail-fast: false
       matrix:
         backend: [numpy, autograd, pytorch]
-        candidate: [custom-ivp]
+        candidate: [boundary-jacobian, endpoint-broadcasting]
         include:
-          - candidate: custom-ivp
-            sha: b6b7ec188dabc42fe64c5f95ad7884f730cca463
-            source: geomstats/numerics/ivp.py
-            regression: tests/tests_geomstats/test_numerics/test_custom_ivp_steps.py
-            adjacent: tests/tests_geomstats/test_numerics/test_exp.py
-            covered_lines: "[178, 179, 181, 184, 185, 187, 189, 190, 194]"
+          - candidate: boundary-jacobian
+            sha: 6c3a5bd6eafd7e9e214da086b97ae848e9dd29f3
+            source: geomstats/numerics/bvp.py
+            regression: tests/tests_geomstats/test_numerics/test_bvp_boundary_jacobian.py
+            adjacent: tests/tests_geomstats/test_numerics/test_log.py::TestLogSolverAgainstClosedForm tests/tests_geomstats/test_numerics/test_log.py::TestLogODESolverMatrix
+            covered_lines: "[41,43,44,47]"
+          - candidate: endpoint-broadcasting
+            sha: e4d3ce2fb14989d0171261901ef4810f835ae74b
+            source: geomstats/numerics/geodesic.py
+            regression: tests/tests_geomstats/test_numerics/test_bvp_broadcasting.py
+            adjacent: tests/tests_geomstats/test_numerics/test_log.py
+            covered_lines: "[268,270,271,274,275,276,282,411,619,621,622,625,626,650,653,656,710,712,713,716,717,718,724]"
     env:
       GEOMSTATS_BACKEND: ${{ matrix.backend }}
       PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
@@ -40,7 +46,7 @@ jobs:
         run: python -m pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
       - name: Install focused test dependencies
         run: python -m pip install -e . pytest coverage ruff nbformat nbconvert autograd
-      - name: Verify regression tests fail on unchanged upstream
+      - name: Check expected baseline behavior on unchanged upstream
         run: |
           git show 2fc8e25eb8955767292552f9c0c1438be362ba8f:${{ matrix.source }} > ${{ matrix.source }}
           set +e
@@ -48,7 +54,11 @@ jobs:
           status=$?
           set -e
           cat baseline.txt
-          test "$status" -eq 1
+          expected=1
+          if [ "${{ matrix.candidate }}" = "boundary-jacobian" ] && [ "${{ matrix.backend }}" != "pytorch" ]; then
+            expected=0
+          fi
+          test "$status" -eq "$expected"
           git checkout ${{ matrix.sha }} -- ${{ matrix.source }}
       - name: Test the candidate and adjacent existing behavior
         run: |
@@ -74,43 +84,3 @@ jobs:
           path: |
             baseline.txt
             coverage.json
-
-  reproduce-boundary-jacobian:
-    runs-on: ubuntu-latest
-    env:
-      GEOMSTATS_BACKEND: pytorch
-      PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
-      PYTHONDONTWRITEBYTECODE: "1"
-      SCIPY_ARRAY_API: "1"
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: 9806fde0e2190d09c7cc5e004cc8609001a7a2fe
-          fetch-depth: 2
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Install CPU PyTorch and test dependencies
-        run: |
-          python -m pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
-          python -m pip install -e . pytest nbformat nbconvert
-      - name: Reproduce callback backend mismatch on unchanged upstream
-        run: |
-          set +e
-          python -m pytest -q -p no:cacheprovider tests/tests_geomstats/test_numerics/test_bvp_boundary_jacobian.py > baseline-bvp.txt 2>&1
-          status=$?
-          set -e
-          cat baseline-bvp.txt
-          test "$status" -eq 1
-          python - <<'PY'
-          from pathlib import Path
-          log = Path("baseline-bvp.txt").read_text()
-          assert "2 failed, 1 passed" in log, log
-          assert "TypeError" in log and "zeros_like" in log and "numpy.ndarray" in log, log
-          print("Confirmed that boundary Jacobian receives NumPy arrays instead of backend tensors.")
-          PY
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: bvp-boundary-jacobian-pytorch-baseline
-          path: baseline-bvp.txt
