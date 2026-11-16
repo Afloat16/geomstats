@@ -155,11 +155,16 @@ class RiemannianKMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         self : object
             Returns self.
         """
+        if not (gs.is_floating(X) or gs.is_complex(X)):
+            X = gs.cast(X, gs.get_default_dtype())
+
         n_samples = X.shape[0]
         if self.verbose > 0:
             logger.info("Initializing...")
 
         cluster_centers = self._pick_init_cluster_centers(X)
+        if not (gs.is_floating(cluster_centers) or gs.is_complex(cluster_centers)):
+            cluster_centers = gs.cast(cluster_centers, gs.get_default_dtype())
         self.init_cluster_centers_ = gs.copy(cluster_centers)
 
         dists = [

@@ -119,6 +119,9 @@ class OnlineKMeans(BaseEstimator, ClusterMixin):
         self : object
             Returns self.
         """
+        if not (gs.is_floating(X) or gs.is_complex(X)):
+            X = gs.cast(X, gs.get_default_dtype())
+
         n_samples = X.shape[0]
 
         random_indices = gs.random.randint(

@@ -1,9 +1,12 @@
 import random
 
+import numpy as np
 import pytest
 
+import geomstats.backend as gs
 from geomstats.geometry.euclidean import Euclidean
 from geomstats.geometry.hypersphere import Hypersphere
+from geomstats.geometry.matrices import Matrices
 from geomstats.geometry.spd_matrices import SPDMatrices
 from geomstats.learning.frechet_mean import FrechetMean
 from geomstats.learning.kmeans import RiemannianKMeans
@@ -106,3 +109,32 @@ class TestAgainstFrechetMean(
     AgainstFrechetMeanTestCase, metaclass=DataBasedParametrizer
 ):
     testing_data = AgainstFrechetMeanTestData()
+
+
+@pytest.mark.parametrize("space", [Euclidean(2), Matrices(2, 2)])
+@pytest.mark.parametrize("dtype", [gs.int32, gs.int64, gs.float32, gs.float64])
+@pytest.mark.parametrize("init", ["array", "callable", "random", "kmeans++"])
+def test_kmeans_fractional_centers(space, dtype, init, monkeypatch):
+    base = gs.reshape(gs.arange(space.dim), space.shape)
+    data = gs.cast(gs.stack([base, base + 1, base + 10, base + 11]), dtype)
+    original = gs.copy(data)
+    centers = gs.stack([data[0], data[2]])
+    if init == "array":
+        init = centers
+    elif init == "callable":
+        init = lambda X, n_clusters: centers
+    else:
+        indices = iter([0, 2])
+        monkeypatch.setattr(
+            "geomstats.learning.kmeans.randint", lambda low, high: next(indices)
+        )
+
+    estimator = RiemannianKMeans(space, n_clusters=2, init=init).fit(data)
+
+    expected = gs.stack([base + 0.5, base + 10.5])
+    np.testing.assert_allclose(gs.to_numpy(estimator.cluster_centers_), expected)
+    np.testing.assert_allclose(gs.to_numpy(estimator.inertia_), space.dim)
+    np.testing.assert_array_equal(gs.to_numpy(estimator.labels_), [0, 0, 1, 1])
+    np.testing.assert_array_equal(gs.to_numpy(data), gs.to_numpy(original))
+    expected_dtype = dtype if gs.is_floating(data) else gs.get_default_dtype()
+    assert estimator.cluster_centers_.dtype == expected_dtype
