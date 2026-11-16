@@ -117,6 +117,7 @@ class RiemannianMeanShift(ClusterMixin, BaseEstimator):
             centers = X[gs.random.randint(n_points, size=(self.n_clusters,)), :]
         elif self.init_centers == "random_uniform":
             centers = self.space.random_uniform(n_samples=self.n_clusters)
+            centers = gs.reshape(centers, (self.n_clusters,) + self.space.shape)
 
         return centers
 
