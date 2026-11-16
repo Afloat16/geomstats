@@ -1,4 +1,4 @@
-name: Validate batched Autograd matrix-function adjoints
+name: Validate callable IVP steps and reproduce BVP callback mismatch
 
 on:
   push:
@@ -13,15 +13,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        backend: [autograd]
-        candidate: [adjoint]
+        backend: [numpy, autograd, pytorch]
+        candidate: [custom-ivp]
         include:
-          - candidate: adjoint
-            sha: 5e09ba4d8123f0a40799004f8f7d7f8d0eed1a2e
-            source: geomstats/_backend/autograd/linalg.py
-            regression: tests/tests_geomstats/test_backend/test_autograd_matrix_adjoint.py
-            adjacent: tests/tests_geomstats/test_backend/test_autodiff.py
-            covered_lines: "[28, 34, 35]"
+          - candidate: custom-ivp
+            sha: b6b7ec188dabc42fe64c5f95ad7884f730cca463
+            source: geomstats/numerics/ivp.py
+            regression: tests/tests_geomstats/test_numerics/test_custom_ivp_steps.py
+            adjacent: tests/tests_geomstats/test_numerics/test_exp.py
+            covered_lines: "[178, 179, 181, 184, 185, 187, 189, 190, 194]"
     env:
       GEOMSTATS_BACKEND: ${{ matrix.backend }}
       PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
@@ -74,3 +74,43 @@ jobs:
           path: |
             baseline.txt
             coverage.json
+
+  reproduce-boundary-jacobian:
+    runs-on: ubuntu-latest
+    env:
+      GEOMSTATS_BACKEND: pytorch
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+      SCIPY_ARRAY_API: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 9806fde0e2190d09c7cc5e004cc8609001a7a2fe
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install CPU PyTorch and test dependencies
+        run: |
+          python -m pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e . pytest nbformat nbconvert
+      - name: Reproduce callback backend mismatch on unchanged upstream
+        run: |
+          set +e
+          python -m pytest -q -p no:cacheprovider tests/tests_geomstats/test_numerics/test_bvp_boundary_jacobian.py > baseline-bvp.txt 2>&1
+          status=$?
+          set -e
+          cat baseline-bvp.txt
+          test "$status" -eq 1
+          python - <<'PY'
+          from pathlib import Path
+          log = Path("baseline-bvp.txt").read_text()
+          assert "2 failed, 1 passed" in log, log
+          assert "TypeError" in log and "zeros_like" in log and "numpy.ndarray" in log, log
+          print("Confirmed that boundary Jacobian receives NumPy arrays instead of backend tensors.")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bvp-boundary-jacobian-pytorch-baseline
+          path: baseline-bvp.txt
