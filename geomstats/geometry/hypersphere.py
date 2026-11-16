@@ -531,9 +531,7 @@ class HypersphereMetric(RiemannianMetric):
 
         coef_1 = utils.taylor_exp_even_func(norm2, utils.cos_close_0, order=4)
         coef_2 = utils.taylor_exp_even_func(norm2, utils.sinc_close_0, order=4)
-        return scalarvecmul(coef_1, base_point) + scalarvecmul(
-            coef_2, proj_tangent_vec
-        )
+        return scalarvecmul(coef_1, base_point) + scalarvecmul(coef_2, proj_tangent_vec)
 
     def log(self, point, base_point):
         """Compute the Riemannian logarithm of a point.
@@ -605,8 +603,27 @@ class HypersphereMetric(RiemannianMetric):
         Returns
         -------
         sq_dist : array-like, shape=[...,]
+
+        Notes
+        -----
+        Near coincident points, use the fourth-order expansion in the squared
+        chord length. This avoids the singular derivative of arccos at one.
         """
-        return self.dist(point_a, point_b) ** 2
+        embedding_metric = self._space.embedding_space.metric
+        point_a = point_a / embedding_metric.norm(point_a)[..., None]
+        point_b = point_b / embedding_metric.norm(point_b)[..., None]
+        squared_chord = gs.sum((point_a - point_b) ** 2, axis=-1)
+        near = squared_chord < 1e-4
+        squared_angle = squared_chord * (
+            1.0
+            + squared_chord
+            * (1.0 / 12.0 + squared_chord * (1.0 / 90.0 + squared_chord / 560.0))
+        )
+        cos_angle = gs.where(
+            near, gs.zeros_like(squared_chord), 1.0 - squared_chord / 2.0
+        )
+        angle = gs.arccos(gs.clip(cos_angle, -1.0, 1.0))
+        return gs.where(near, squared_angle, angle**2)
 
     def parallel_transport(
         self, tangent_vec, base_point, direction=None, end_point=None
