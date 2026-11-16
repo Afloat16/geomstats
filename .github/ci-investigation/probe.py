@@ -11,18 +11,38 @@ from scipy.stats import normaltest
 import geomstats.backend as gs
 from geomstats.geometry.invariant_metric import _InvariantMetricMatrix
 from geomstats.geometry.euclidean import Euclidean
+from geomstats.geometry.hypersphere import Hypersphere, VonMisesFisher
 from geomstats.geometry.open_hemisphere import OpenHemispheresProduct
+from geomstats.geometry.positive_lower_triangular_matrices import UnitNormedRowsPLTMatrices
 from geomstats.geometry.spd_matrices import MatrixPower
 from geomstats.geometry.special_orthogonal import SpecialOrthogonal
 from geomstats.distributions.brownian_motion import BrownianMotion
 from geomstats.information_geometry.beta import BetaDistributions
 from geomstats.learning.exponential_barycenter import ExponentialBarycenter
 from geomstats.learning.frechet_mean import FrechetMean
+from geomstats.learning.regression import AACRegression
+from geomstats.metric_geometry.graph_space import GraphSpace
 from geomstats.test.random import RandomDataGenerator
 
 
 def payload_for(kind, seed):
     gs.random.seed(seed)
+    if kind == "vmf":
+        space = Hypersphere(5, equip=False)
+        return {"dim": 5, "seed": seed, "mu": gs.to_numpy(space.random_point()).tolist(),
+                "kappa": 5.0, "n_samples": 1000}
+    if kind == "aac_constant":
+        space = GraphSpace(3 + seed % 2)
+        return {"point": gs.to_numpy(space.random_point()).tolist(), "n_samples": 4}
+    if kind == "plt_norm":
+        n = 3 + seed % 3
+        generator = RandomDataGenerator(UnitNormedRowsPLTMatrices(n), amplitude=5.0)
+        base = generator.random_point(4)
+        direction = generator.random_tangent_vec(base)
+        tangent = generator.random_tangent_vec(base)
+        return {"n": n, "base": gs.to_numpy(base).tolist(),
+                "direction": gs.to_numpy(direction).tolist(),
+                "tangent": gs.to_numpy(tangent).tolist()}
     if kind in {"hemisphere", "hemisphere_norm"}:
         n = 3 + seed % 3
         generator = RandomDataGenerator(OpenHemispheresProduct(n), amplitude=5.0)
@@ -42,6 +62,41 @@ def payload_for(kind, seed):
 
 def evaluate(kind, payload):
     try:
+        if kind == "vmf":
+            gs.random.seed(payload["seed"])
+            space = Hypersphere(payload["dim"], equip=False)
+            mu = gs.array(payload["mu"])
+            sample = VonMisesFisher(space, mu=mu, kappa=payload["kappa"]).sample(payload["n_samples"])
+            summed = gs.sum(sample, axis=0)
+            result = summed / gs.linalg.norm(summed)
+            return {"passed": bool(gs.allclose(result, mu, atol=0.01)),
+                    "first": gs.to_numpy(result).tolist(), "second": gs.to_numpy(mu).tolist(),
+                    "max_error": float(np.max(gs.to_numpy(gs.abs(result - mu))))}
+        if kind == "aac_constant":
+            point = gs.array(payload["point"])
+            space = GraphSpace(point.shape[-1])
+            space.equip_with_group_action()
+            space.equip_with_quotient()
+            space.aligner.set_alignment_algorithm("exhaustive")
+            estimator = AACRegression(space, init_point=gs.zeros(point.shape))
+            y = gs.broadcast_to(point, (payload["n_samples"],) + point.shape)
+            x = gs.expand_dims(gs.linspace(0.0, 1.0, num=payload["n_samples"]), axis=-1)
+            prediction = estimator.fit(x, y).predict(x)
+            dists = space.metric.dist(prediction, y)
+            quotient = space.quotient.metric.dist(prediction, y)
+            return {"passed": bool(gs.allclose(dists, gs.zeros_like(dists), atol=1e-6)),
+                    "first": gs.to_numpy(dists).tolist(), "second": gs.to_numpy(quotient).tolist()}
+        if kind == "plt_norm":
+            space = UnitNormedRowsPLTMatrices(payload["n"])
+            base, direction, tangent = [gs.array(payload[key])
+                                        for key in ["base", "direction", "tangent"]]
+            transported = space.metric.parallel_transport(tangent, base, direction=direction)
+            end = space.metric.exp(direction, base)
+            first = space.metric.norm(transported, end)
+            second = space.metric.norm(tangent, base)
+            return {"passed": bool(gs.allclose(first, second, atol=1e-6)),
+                    "first": gs.to_numpy(first).tolist(), "second": gs.to_numpy(second).tolist(),
+                    "max_error": float(np.max(gs.to_numpy(gs.abs(first - second))))}
         if kind == "beta_derivative":
             result = BetaDistributions().metric.inner_product_derivative_matrix(
                 gs.array(payload["parameters"])
