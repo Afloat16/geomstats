@@ -105,7 +105,7 @@ try:
 except ImportError:
     from autograd.numpy import trapz as trapezoid
 
-from autograd.scipy.special import erf, gamma, polygamma  # NOQA
+from autograd.scipy.special import erf, gamma, gammaln, polygamma  # NOQA
 
 
 from . import (

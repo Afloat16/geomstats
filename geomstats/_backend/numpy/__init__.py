@@ -101,7 +101,7 @@ from numpy import (
     where,
     zeros_like,
 )
-from scipy.special import erf, gamma, polygamma  # NOQA
+from scipy.special import erf, gamma, gammaln, polygamma  # NOQA
 
 from . import (
     autodiff,  # NOQA

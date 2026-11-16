@@ -78,6 +78,9 @@ class BetaDistributions(DirichletDistributions):
         """
         alpha = gs.expand_dims(point[..., 0], axis=-1)
         beta = gs.expand_dims(point[..., 1], axis=-1)
+        log_normalization = (
+            gs.gammaln(alpha + beta) - gs.gammaln(alpha) - gs.gammaln(beta)
+        )
 
         def pdf(x):
             """Generate parameterized function for normal pdf.
@@ -94,11 +97,19 @@ class BetaDistributions(DirichletDistributions):
                 by point.
             """
             x = gs.reshape(gs.array(x), (-1,))
-            return (
-                x ** (alpha - 1)
-                * (1 - x) ** (beta - 1)
-                / (gs.gamma(alpha) * gs.gamma(beta) / gs.gamma(alpha + beta))
+            interior = gs.logical_and(x > 0, x < 1)
+            safe_x = gs.where(interior, x, 0.5)
+            values = gs.exp(
+                log_normalization
+                + (alpha - 1) * gs.log(safe_x)
+                + (beta - 1) * gs.log(1 - safe_x)
             )
+            values = gs.where(interior, values, 0.0)
+            at_zero = gs.where(alpha == 1, beta, gs.where(alpha < 1, gs.inf, 0.0))
+            at_one = gs.where(beta == 1, alpha, gs.where(beta < 1, gs.inf, 0.0))
+            values = gs.where(x == 0, gs.broadcast_to(at_zero, values.shape), values)
+            values = gs.where(x == 1, gs.broadcast_to(at_one, values.shape), values)
+            return gs.where(gs.isnan(x), x, values)
 
         return pdf
 

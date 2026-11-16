@@ -225,6 +225,7 @@ class GammaDistributions(InformationManifoldMixin, VectorSpaceOpenSet):
         """
         kappa = gs.expand_dims(point[..., 0], axis=-1)
         gamma = gs.expand_dims(point[..., 1], axis=-1)
+        log_normalization = kappa * (gs.log(kappa) - gs.log(gamma)) - gs.gammaln(kappa)
 
         def pdf(x):
             """Generate parameterized function for Gamma pdf.
@@ -242,12 +243,17 @@ class GammaDistributions(InformationManifoldMixin, VectorSpaceOpenSet):
                 by point.
             """
             x = gs.reshape(gs.array(x), (-1,))
-            return (
-                kappa**kappa
-                * x ** (kappa - 1)
-                * gs.exp(-kappa * x / gamma)
-                / (gamma**kappa * gs.gamma(kappa))
+            interior = gs.logical_and(x > 0, x < gs.inf)
+            safe_x = gs.where(interior, x, 1.0)
+            values = gs.exp(
+                log_normalization
+                + (kappa - 1) * gs.log(safe_x)
+                - kappa * safe_x / gamma
             )
+            values = gs.where(interior, values, 0.0)
+            at_zero = gs.where(kappa == 1, 1 / gamma, gs.where(kappa < 1, gs.inf, 0.0))
+            values = gs.where(x == 0, gs.broadcast_to(at_zero, values.shape), values)
+            return gs.where(gs.isnan(x), x, values)
 
         return pdf
 

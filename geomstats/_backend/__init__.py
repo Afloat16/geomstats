@@ -84,6 +84,7 @@ BACKEND_ATTRIBUTES = {
         "floor",
         "from_numpy",
         "gamma",
+        "gammaln",
         "get_default_dtype",
         "get_default_cdtype",
         "greater",

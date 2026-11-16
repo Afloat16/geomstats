@@ -47,7 +47,7 @@ from torch import (
 )
 from torch import broadcast_tensors as broadcast_arrays
 from torch import repeat_interleave as repeat
-from torch.special import gammaln as _gammaln
+from torch.special import gammaln
 
 from . import (
     autodiff,  # NOQA
@@ -694,7 +694,7 @@ def cross(a, b):
 
 
 def gamma(a):
-    return _torch.exp(_gammaln(a))
+    return _torch.exp(gammaln(a))
 
 
 def imag(a):
