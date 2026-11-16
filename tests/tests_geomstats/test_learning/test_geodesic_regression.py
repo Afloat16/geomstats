@@ -1,7 +1,9 @@
 import random
 
 import pytest
+from sklearn.metrics import r2_score
 
+import geomstats.backend as gs
 from geomstats.geometry.discrete_curves import DiscreteCurvesStartingAtOrigin
 from geomstats.geometry.euclidean import Euclidean
 from geomstats.geometry.hypersphere import Hypersphere
@@ -65,3 +67,44 @@ class TestGeodesicRegressionOnlyAutograd(
     GeodesicRegressionTestCase, metaclass=DataBasedParametrizer
 ):
     testing_data = GeodesicRegressionTestData()
+
+
+@pytest.mark.parametrize("center_X", [False, True])
+@pytest.mark.parametrize("weights", [None, [1.0, 1.0, 1.0, 1.0], [8.0, 1.0, 3.0, 2.0]])
+def test_weighted_score_matches_euclidean_regression(center_X, weights):
+    inputs = gs.array([1.0, 2.0, 3.0, 5.0])
+    targets = gs.array([[1.0, -1.0], [2.0, 3.0], [4.0, 2.0], [5.0, 8.0]])
+    weights = None if weights is None else gs.array(weights)
+    estimator = GeodesicRegression(
+        Euclidean(2),
+        center_X=center_X,
+        initialization=(gs.zeros(2), gs.zeros(2)),
+        compute_training_score=True,
+    ).fit(inputs, targets, weights=weights)
+
+    expected = r2_score(
+        gs.to_numpy(targets),
+        gs.to_numpy(estimator.predict(inputs)),
+        sample_weight=None if weights is None else gs.to_numpy(weights),
+        multioutput="variance_weighted",
+    )
+    assert gs.isclose(estimator.score(inputs, targets, weights=weights), expected)
+    assert gs.isclose(estimator.training_score_, expected)
+
+
+@pytest.mark.parametrize("weights", [None, [8.0, 1.0, 3.0, 2.0]])
+def test_weighted_score_on_circle(weights):
+    angles = gs.array([0.1, 0.2, 0.7, 1.0])
+    targets = gs.stack([gs.cos(angles), gs.sin(angles)], axis=-1)
+    inputs = gs.array([0.0, 1.0, 2.0, 3.0])
+    estimator = GeodesicRegression(Hypersphere(1), center_X=False)
+    estimator.intercept_ = gs.array([gs.cos(0.3), gs.sin(0.3)])
+    estimator.coef_ = 0.15 * gs.array([-gs.sin(0.3), gs.cos(0.3)])
+
+    weights = None if weights is None else gs.array(weights)
+    expected = r2_score(
+        gs.to_numpy(angles),
+        gs.to_numpy(0.3 + 0.15 * inputs),
+        sample_weight=None if weights is None else gs.to_numpy(weights),
+    )
+    assert gs.isclose(estimator.score(inputs, targets, weights=weights), expected)

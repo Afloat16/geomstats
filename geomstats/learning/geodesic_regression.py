@@ -28,7 +28,7 @@ from sklearn.base import BaseEstimator
 
 import geomstats.backend as gs
 import geomstats.errors as error
-from geomstats.learning.frechet_mean import FrechetMean
+from geomstats.learning.frechet_mean import CircleMean, FrechetMean
 from geomstats.numerics.optimization import ScipyMinimize
 
 logger = logging.getLogger(__name__)
@@ -408,8 +408,7 @@ class GeodesicRegression(BaseEstimator):
         self.coef_ = self.space.to_tangent(coef_hat, self.intercept_)
 
         if self.compute_training_score:
-            variance = gs.sum(self.space.metric.squared_dist(y, self.intercept_))
-            self.training_score_ = 1 - 2 * res.fun / variance
+            self.training_score_ = self.score(X, y, weights=weights)
 
         return self
 
@@ -519,9 +518,14 @@ class GeodesicRegression(BaseEstimator):
         """
         y_pred = self.predict(X)
         if weights is None:
+            mean = self.mean_estimator.fit(y).estimate_
             weights = 1.0
+        else:
+            mean_estimator = self.mean_estimator
+            if isinstance(mean_estimator, CircleMean):
+                mean_estimator = FrechetMean(self.space, method="default")
+            mean = mean_estimator.fit(y, weights=weights).estimate_
 
-        mean = self.mean_estimator.fit(y).estimate_
         numerator = gs.sum(weights * self.space.metric.squared_dist(y, y_pred))
         denominator = gs.sum(weights * self.space.metric.squared_dist(y, mean))
 
