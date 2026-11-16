@@ -21,6 +21,7 @@ def _merge_scipy_results(results, same_t=False):
     if same_t:
         merged_results["t"] = merged_results["t"][0]
         merged_results["y"] = gs.stack(merged_results["y"])
+        merged_results["time_axis"] = 1
 
     return merged_results
 
@@ -37,12 +38,13 @@ class OdeResult(scipy.optimize.OptimizeResult):
         Allows to have y represented as an ``gs.array`` or ``list[gs.array]`` (latter
         for cases where they have different shapes).
 
-        Assumes last ``t`` is the same.
+        Assumes last ``t`` is the same. For array-valued trajectories,
+        ``time_axis`` identifies the time dimension and defaults to zero.
         """
         if isinstance(self.y, (list, tuple)):
             return gs.stack([y_[-1] for y_ in self.y])
 
-        return self.y[-1]
+        return gs.moveaxis(self.y, self.get("time_axis", 0), 0)[-1]
 
 
 class ODEIVPIntegrator(ABC):
