@@ -1,4 +1,4 @@
-name: Validate SciPy numerical Jacobian modes
+name: Validate Newton final-iterate convergence
 
 on:
   push:
@@ -14,14 +14,14 @@ jobs:
       fail-fast: false
       matrix:
         backend: [numpy, autograd, pytorch]
-        candidate: [jacobian-modes]
+        candidate: [newton-final-iterate]
         include:
-          - candidate: jacobian-modes
-            sha: 9c15306358c54ed8ed29d3ef799b0e1cdd19851d
-            source: geomstats/numerics/optimization/_scipy.py
-            regression: tests/tests_geomstats/test_numerics/test_scipy_jacobian_modes.py
+          - candidate: newton-final-iterate
+            sha: 412403aaff6e2b2535ff772fb3443454804db65c
+            source: geomstats/numerics/optimization/_optimization.py
+            regression: tests/tests_geomstats/test_numerics/test_newton_final_iterate.py
             adjacent: tests/tests_geomstats/test_numerics/test_optimization.py
-            covered_lines: "[61,67,70,118]"
+            covered_lines: "[107,108,111,112,114,115,123]"
     env:
       GEOMSTATS_BACKEND: ${{ matrix.backend }}
       PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
