@@ -17,7 +17,7 @@ jobs:
         candidate: [normal-basis]
         include:
           - candidate: normal-basis
-            sha: 9e87f5b22f2a4d950d82397670debd05eee2d345
+            sha: 7be61d64dc762368c78c43ce530e2cd215066d40
             source: geomstats/geometry/riemannian_metric.py
             regression: tests/tests_geomstats/test_geometry/test_metric_basis_normalization.py
             adjacent: tests/tests_geomstats/test_geometry/test_euclidean.py tests/tests_geomstats/test_geometry/test_matrices.py
@@ -31,7 +31,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ matrix.sha }}
-          fetch-depth: 3
+          fetch-depth: 4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
