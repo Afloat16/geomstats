@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         backend: [numpy, autograd, pytorch]
-        candidate: [nfold]
+        candidate: [nfold, barycenter]
         include:
           - candidate: nfold
             sha: 05638a12adcca5d913d667dd8968af3da2866bf7
@@ -22,6 +22,12 @@ jobs:
             regression: tests/tests_geomstats/test_geometry/test_nfold_membership_shapes.py
             adjacent: tests/tests_geomstats/test_geometry/test_nfold_manifold.py
             covered_lines: "[68, 69]"
+          - candidate: barycenter
+            sha: 863af5018ef694c75858bf437f48d49543949308
+            source: geomstats/learning/exponential_barycenter.py
+            regression: tests/tests_geomstats/test_learning/test_connection_barycenter_backtracking.py
+            adjacent: tests/tests_geomstats/test_learning/test_exponential_barycenter.py
+            covered_lines: "[129, 130, 131, 138, 139, 140, 142, 144, 145]"
     env:
       GEOMSTATS_BACKEND: ${{ matrix.backend }}
       PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
@@ -31,7 +37,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ matrix.sha }}
-          fetch-depth: 2
+          fetch-depth: 3
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
