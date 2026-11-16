@@ -1,4 +1,4 @@
-name: Validate n-fold membership and tensor interpolation
+name: Validate integer finite-difference regressions
 
 on:
   push:
@@ -14,20 +14,14 @@ jobs:
       fail-fast: false
       matrix:
         backend: [numpy, autograd, pytorch]
-        candidate: [nfold, barycenter]
+        candidate: [finite]
         include:
-          - candidate: nfold
-            sha: 05638a12adcca5d913d667dd8968af3da2866bf7
-            source: geomstats/geometry/nfold_manifold.py
-            regression: tests/tests_geomstats/test_geometry/test_nfold_membership_shapes.py
-            adjacent: tests/tests_geomstats/test_geometry/test_nfold_manifold.py
-            covered_lines: "[68, 69]"
-          - candidate: barycenter
-            sha: 863af5018ef694c75858bf437f48d49543949308
-            source: geomstats/learning/exponential_barycenter.py
-            regression: tests/tests_geomstats/test_learning/test_connection_barycenter_backtracking.py
-            adjacent: tests/tests_geomstats/test_learning/test_exponential_barycenter.py
-            covered_lines: "[129, 130, 131, 138, 139, 140, 142, 144, 145]"
+          - candidate: finite
+            sha: 9b6b6cfc9b987d04bd98fd5a69970b2cfbbca7d4
+            source: geomstats/numerics/finite_differences.py
+            regression: tests/tests_geomstats/test_numerics/test_finite_difference_dtypes.py
+            adjacent: tests/tests_geomstats/test_numerics/test_finite_differences.py
+            covered_lines: "[28, 29, 70, 71, 123, 124]"
     env:
       GEOMSTATS_BACKEND: ${{ matrix.backend }}
       PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
