@@ -1,4 +1,4 @@
-name: Validate Hessian callbacks and pointwise derivative batches
+name: Validate PyTorch gradient evaluation state
 
 on:
   push:
@@ -13,47 +13,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        backend: [pytorch]
+        candidate: [gradient-state]
         include:
-          - candidate: hessian-vector-callbacks
-            backend: numpy
-            sha: f7af36102164dae14a13c359b4437d513437100a
-            source: geomstats/numerics/optimization/_scipy.py
-            regression: tests/tests_geomstats/test_numerics/test_scipy_hessian_vector_callbacks.py
-            adjacent: "tests/tests_geomstats/test_numerics/test_optimization.py -k \"not Torch\""
-            covered_lines: "[118,119,120]"
-            baseline_exit: 0
-          - candidate: hessian-vector-callbacks
-            backend: autograd
-            sha: f7af36102164dae14a13c359b4437d513437100a
-            source: geomstats/numerics/optimization/_scipy.py
-            regression: tests/tests_geomstats/test_numerics/test_scipy_hessian_vector_callbacks.py
-            adjacent: "tests/tests_geomstats/test_numerics/test_optimization.py -k \"not Torch\""
-            covered_lines: "[118,119,120]"
-            baseline_exit: 0
-          - candidate: hessian-vector-callbacks
-            backend: pytorch
-            sha: f7af36102164dae14a13c359b4437d513437100a
-            source: geomstats/numerics/optimization/_scipy.py
-            regression: tests/tests_geomstats/test_numerics/test_scipy_hessian_vector_callbacks.py
-            adjacent: "tests/tests_geomstats/test_numerics/test_optimization.py -k \"not Torch\""
-            covered_lines: "[118,119,120]"
-            baseline_exit: 1
-          - candidate: derivative-batches
-            backend: autograd
-            sha: 411a6a7cdec459db8c72842d824e90cdaa35639d
-            source: geomstats/_backend/autograd/autodiff.py
-            regression: tests/tests_geomstats/test_backend/test_derivative_batch_axes.py
-            adjacent: "tests/tests_geomstats/test_backend/test_autodiff.py"
-            covered_lines: "[210,211,212,220,221,267,268,269,270,271,333,334,335,336,337]"
-            baseline_exit: 1
-          - candidate: derivative-batches
-            backend: pytorch
-            sha: 411a6a7cdec459db8c72842d824e90cdaa35639d
+          - candidate: gradient-state
+            sha: 81534adb2b25ccee49550ce7d32ce8aec1b29fba
             source: geomstats/_backend/pytorch/autodiff.py
-            regression: tests/tests_geomstats/test_backend/test_derivative_batch_axes.py
-            adjacent: "tests/tests_geomstats/test_backend/test_autodiff.py"
-            covered_lines: "[184,185,186,187,194,263,264,265,266,270]"
-            baseline_exit: 1
+            regression: tests/tests_geomstats/test_backend/test_torch_value_and_grad_state.py
+            adjacent: tests/tests_geomstats/test_backend/test_autodiff.py
+            covered_lines: "[360,361,362,363,366,367]"
     env:
       GEOMSTATS_BACKEND: ${{ matrix.backend }}
       PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
@@ -63,7 +31,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ matrix.sha }}
-          fetch-depth: 5
+          fetch-depth: 3
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -72,34 +40,7 @@ jobs:
         run: python -m pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
       - name: Install focused test dependencies
         run: python -m pip install -e . pytest coverage ruff nbformat nbconvert autograd
-      - name: Install optional optimizer used by adjacent PyTorch tests
-        if: matrix.backend == 'pytorch'
-        run: python -m pip install pytorch-minimize --no-deps
-      - name: Prepare independent native LBFGS control
-        if: matrix.backend == 'pytorch' && matrix.candidate == 'hessian-vector-callbacks'
-        run: |
-          cat > native_torch_control.py <<'PY'
-          import json
-          import numpy as np
-          import torch
-          import geomstats.backend as gs
-          from geomstats.numerics.optimization import TorchLBFGS
-          start = gs.array([0.4171])
-          wrapper = TorchLBFGS()
-          result = wrapper.minimize(lambda point: gs.sum(point ** 2), start)
-          point = start.clone().requires_grad_(True)
-          native = torch.optim.LBFGS([point], lr=1, max_iter=100, history_size=1)
-          def closure():
-              native.zero_grad()
-              value = (point ** 2).sum()
-              value.backward()
-              return value
-          native.step(closure)
-          np.testing.assert_allclose(result.x.detach().numpy(), point.detach().numpy(), rtol=0, atol=0)
-          assert float(point.detach().abs().max()) > 0.1
-          print(json.dumps({"initial": start.tolist(), "wrapper": result.x.detach().tolist(), "native": point.detach().tolist(), "wrapper_success": bool(result.success), "wrapper_iterations": result.nit}))
-          PY
-      - name: Verify regression behavior on unchanged upstream
+      - name: Verify regression tests fail on unchanged upstream
         run: |
           git show 2fc8e25eb8955767292552f9c0c1438be362ba8f:${{ matrix.source }} > ${{ matrix.source }}
           set +e
@@ -107,16 +48,8 @@ jobs:
           status=$?
           set -e
           cat baseline.txt
-          test "$status" -eq ${{ matrix.baseline_exit }}
-          if [ "${{ matrix.backend }}" = "pytorch" ] && [ "${{ matrix.candidate }}" = "hessian-vector-callbacks" ]; then
-            python native_torch_control.py > native-baseline.json
-          fi
+          test "$status" -eq 1
           git checkout ${{ matrix.sha }} -- ${{ matrix.source }}
-          if [ "${{ matrix.backend }}" = "pytorch" ] && [ "${{ matrix.candidate }}" = "hessian-vector-callbacks" ]; then
-            python native_torch_control.py > native-candidate.json
-            cat native-baseline.json
-            cmp native-baseline.json native-candidate.json
-          fi
       - name: Test the candidate and adjacent existing behavior
         run: |
           python -m coverage run --include="*/${{ matrix.source }}" -m pytest -q -p no:cacheprovider ${{ matrix.regression }} ${{ matrix.adjacent }}
@@ -141,4 +74,3 @@ jobs:
           path: |
             baseline.txt
             coverage.json
-            native-*.json
