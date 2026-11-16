@@ -1,4 +1,4 @@
-name: Validate metric basis normalization
+name: Validate metric bases and concentrated directional sampling
 
 on:
   push:
@@ -14,14 +14,20 @@ jobs:
       fail-fast: false
       matrix:
         backend: [numpy, autograd, pytorch]
-        candidate: [normal-basis]
+        candidate: [normal-basis, vmf-concentration]
         include:
           - candidate: normal-basis
-            sha: 7be61d64dc762368c78c43ce530e2cd215066d40
+            sha: 4bb57d8e9c621c973f7b62a10fbd335789d59425
             source: geomstats/geometry/riemannian_metric.py
             regression: tests/tests_geomstats/test_geometry/test_metric_basis_normalization.py
             adjacent: tests/tests_geomstats/test_geometry/test_euclidean.py tests/tests_geomstats/test_geometry/test_matrices.py
             covered_lines: "[538,541]"
+          - candidate: vmf-concentration
+            sha: 97e2c8f1437c5c78c3192e135d4b89ef6dc565e0
+            source: geomstats/geometry/hypersphere.py
+            regression: tests/tests_geomstats/test_geometry/test_von_mises_fisher_concentration.py
+            adjacent: tests/tests_geomstats/test_geometry/test_hypersphere.py::TestVonMisesFisher tests/tests_geomstats/test_geometry/test_hypersphere.py::TestVonMisesFisherKappa tests/tests_geomstats/test_geometry/test_hypersphere.py::TestHypersphereMetric::test_exp_after_log
+            covered_lines: "[534,1555,1556,1557,1559,1560,1566,1567,1568,1569,1581,1591,1592,1596]"
     env:
       GEOMSTATS_BACKEND: ${{ matrix.backend }}
       PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
@@ -31,7 +37,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ matrix.sha }}
-          fetch-depth: 4
+          fetch-depth: 5
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
