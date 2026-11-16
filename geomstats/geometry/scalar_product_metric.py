@@ -62,6 +62,7 @@ class _ScaledMethodsRegistry:
     ]
     _LINEAR_LIST = [
         "metric_matrix",
+        "flat",
         "inner_product",
         "inner_product_derivative_matrix",
         "squared_norm",
@@ -71,6 +72,7 @@ class _ScaledMethodsRegistry:
     _QUADRATIC_LIST = []
     _INVERSE_LIST = [
         "cometric_matrix",
+        "sharp",
         "inner_coproduct",
         "hamiltonian",
         "sectional_curvature",
