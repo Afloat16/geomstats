@@ -6,11 +6,16 @@ import sys
 from pathlib import Path
 
 import numpy as np
+from scipy.stats import normaltest
 
 import geomstats.backend as gs
 from geomstats.geometry.invariant_metric import _InvariantMetricMatrix
+from geomstats.geometry.euclidean import Euclidean
 from geomstats.geometry.open_hemisphere import OpenHemispheresProduct
+from geomstats.geometry.spd_matrices import MatrixPower
 from geomstats.geometry.special_orthogonal import SpecialOrthogonal
+from geomstats.distributions.brownian_motion import BrownianMotion
+from geomstats.information_geometry.beta import BetaDistributions
 from geomstats.learning.exponential_barycenter import ExponentialBarycenter
 from geomstats.learning.frechet_mean import FrechetMean
 from geomstats.test.random import RandomDataGenerator
@@ -18,10 +23,10 @@ from geomstats.test.random import RandomDataGenerator
 
 def payload_for(kind, seed):
     gs.random.seed(seed)
-    if kind == "hemisphere":
+    if kind in {"hemisphere", "hemisphere_norm"}:
         n = 3 + seed % 3
         generator = RandomDataGenerator(OpenHemispheresProduct(n), amplitude=5.0)
-        base = generator.random_point(3)
+        base = generator.random_point(4 if kind == "hemisphere_norm" else 3)
         direction = generator.random_tangent_vec(base)
         tangent = generator.random_tangent_vec(base)
         return {"n": n, "base": gs.to_numpy(base).tolist(),
@@ -37,12 +42,51 @@ def payload_for(kind, seed):
 
 def evaluate(kind, payload):
     try:
-        if kind == "hemisphere":
+        if kind == "beta_derivative":
+            result = BetaDistributions().metric.inner_product_derivative_matrix(
+                gs.array(payload["parameters"])
+            )
+            return {"passed": True, "values": gs.to_numpy(result).tolist()}
+        if kind == "hpd_power":
+            image = gs.array(payload["real"]) + 1j * gs.array(payload["imag"])
+            diffeo = MatrixPower(power=gs.array([payload["power"]]))
+            inverse = diffeo.inverse(image)
+            result = diffeo(inverse)
+            return {"passed": bool(gs.allclose(result, image, atol=1e-6)),
+                    "values": np.isfinite(gs.to_numpy(result)).tolist(),
+                    "inverse_eigenvalues": gs.to_numpy(gs.linalg.eigvalsh(inverse)).tolist()}
+        if kind == "brownian":
+            draws = np.random.default_rng(payload["seed"]).normal(
+                size=(payload["n_samples"], payload["n_steps"] - 1, payload["n"])
+            )
+            iterator = iter(draws.reshape((-1, payload["n"])))
+            original_normal = gs.random.normal
+            def fixed_normal(*args, **kwargs):
+                return gs.array(next(iterator))
+            gs.random.normal = fixed_normal
+            try:
+                motion = BrownianMotion(Euclidean(payload["n"]))
+                samples = gs.stack([
+                    motion.sample_path(1.0, payload["n_steps"], gs.zeros(payload["n"]))
+                    for _ in range(payload["n_samples"])
+                ])
+            finally:
+                gs.random.normal = original_normal
+            increments = samples[:, 1:] - samples[:, :-1]
+            statistic, p_value = normaltest(gs.to_numpy(increments).flatten())
+            return {"passed": bool(p_value > 0.05), "values": [float(statistic), float(p_value)]}
+        if kind in {"hemisphere", "hemisphere_norm"}:
             space = OpenHemispheresProduct(payload["n"])
             base, direction, tangent = [gs.array(payload[key])
                                         for key in ["base", "direction", "tangent"]]
             transported = space.metric.parallel_transport(tangent, base, direction=direction)
             end = space.metric.exp(direction, base)
+            if kind == "hemisphere_norm":
+                first = space.metric.norm(transported, end)
+                second = space.metric.norm(tangent, base)
+                return {"passed": bool(gs.allclose(first, second, atol=1e-6)),
+                        "first": gs.to_numpy(first).tolist(), "second": gs.to_numpy(second).tolist(),
+                        "max_error": float(np.max(gs.to_numpy(gs.abs(first - second))))}
             result = space.is_tangent(transported, end, atol=1e-6)
             return {"passed": bool(gs.all(result)), "values": gs.to_numpy(result).tolist()}
         if kind == "barycenter":
