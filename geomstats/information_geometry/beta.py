@@ -112,8 +112,9 @@ class BetaDistributions(DirichletDistributions):
         Parameters
         ----------
         data : array-like, shape=[..., n_samples]
-            Data to estimate parameters from. Arrays of
-            different length may be passed.
+            Data to estimate parameters from. Leading axes index separate
+            data sets. A list of one-dimensional samples may contain
+            samples of different lengths.
         loc : float
             Location parameter of the distribution to estimate parameters
             from. It is kept fixed during optimization.
@@ -122,20 +123,39 @@ class BetaDistributions(DirichletDistributions):
             Scale parameter of the distribution to estimate parameters
             from. It is kept fixed during optimization.
             Optional, default: 1.
+        epsilon : float
+            Fraction of the support width used to move observations at
+            either endpoint into the interior.
+            Optional, default: 1e-6.
 
         Returns
         -------
         parameter : array-like, shape=[..., 2]
             Estimate of parameter obtained by maximum likelihood.
         """
-        data = gs.where(data == 1.0, 1.0 - epsilon, data)
-        data = gs.where(data == 0.0, epsilon, data)
-        data = gs.to_ndarray(data, to_ndim=2)
+        if (
+            isinstance(data, (list, tuple))
+            and data
+            and all(len(gs.shape(sample)) == 1 for sample in data)
+        ):
+            samples = [gs.array(sample) for sample in data]
+            batch_shape = (len(samples),)
+        else:
+            data = gs.array(data)
+            batch_shape = data.shape[:-1]
+            samples = gs.reshape(data, (-1, data.shape[-1]))
+
         parameters = []
-        for sample in data:
-            param_a, param_b, _, _ = beta.fit(sample, floc=loc, fscale=scale)
-            parameters.append(gs.array([param_a, param_b]))
-        return parameters[0] if len(data) == 1 else gs.stack(parameters)
+        for sample in samples:
+            sample = gs.where(sample == loc, loc + epsilon * scale, sample)
+            sample = gs.where(
+                sample == loc + scale, loc + (1 - epsilon) * scale, sample
+            )
+            param_a, param_b, _, _ = beta.fit(
+                gs.to_numpy(sample), floc=loc, fscale=scale
+            )
+            parameters.append([param_a, param_b])
+        return gs.reshape(gs.array(parameters), batch_shape + (2,))
 
 
 class BetaMetric(DirichletMetric):
