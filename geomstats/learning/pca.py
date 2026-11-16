@@ -149,6 +149,7 @@ class TangentPCA(_BasePCA):
             self.mean_estimator = ExponentialBarycenter(space)
 
         self.base_point_ = None
+        self._is_symmetric = False
 
     @property
     def _geometry(self):
@@ -218,13 +219,20 @@ class TangentPCA(_BasePCA):
         -------
         X_new : array-like, shape=[..., n_components]
             Projected data.
+
+        Raises
+        ------
+        ValueError
+            If the model was fitted with symmetric tangent coordinates but
+            the new tangent vectors are not symmetric.
         """
         tangent_vecs = self._geometry.log(X, base_point=self.base_point_)
-        if self.space.point_ndim == 2:
-            if (
-                gs.all(Matrices.is_square(tangent_vecs))
-                and Matrices.is_symmetric(tangent_vecs).all()
-            ):
+        if self.space.point_ndim > 1:
+            if self._is_symmetric:
+                if not gs.all(Matrices.is_symmetric(tangent_vecs)):
+                    raise ValueError(
+                        "The fitted model requires symmetric tangent vectors."
+                    )
                 X = SymmetricMatrices.basis_representation(tangent_vecs)
             else:
                 X = gs.reshape(tangent_vecs, (len(X), -1))
@@ -254,15 +262,12 @@ class TangentPCA(_BasePCA):
         scores = self.mean_ + gs.matmul(X, self.components_)
 
         if self.space.point_ndim > 1:
-            if gs.all(Matrices.is_square(self.base_point_)) and gs.all(
-                Matrices.is_symmetric(self.base_point_)
-            ):
+            if self._is_symmetric:
                 scores = SymmetricMatrices(
                     self.base_point_.shape[-1]
                 ).matrix_representation(scores)
             else:
-                dim = self.base_point_.shape[-1]
-                scores = gs.reshape(scores, (len(scores), dim, dim))
+                scores = gs.reshape(scores, (len(scores),) + self.space.shape)
         return self._geometry.exp(scores, self.base_point_)
 
     def _fit(self, X, base_point=None):
@@ -288,10 +293,13 @@ class TangentPCA(_BasePCA):
 
         tangent_vecs = self._geometry.log(X, base_point=base_point)
 
+        self._is_symmetric = (
+            self.space.point_ndim == 2
+            and gs.all(Matrices.is_square(tangent_vecs))
+            and gs.all(Matrices.is_symmetric(tangent_vecs))
+        )
         if self.space.point_ndim > 1:
-            if gs.all(Matrices.is_square(tangent_vecs)) and gs.all(
-                Matrices.is_symmetric(tangent_vecs)
-            ):
+            if self._is_symmetric:
                 X = SymmetricMatrices.basis_representation(tangent_vecs)
             else:
                 X = gs.reshape(tangent_vecs, (len(X), -1))
