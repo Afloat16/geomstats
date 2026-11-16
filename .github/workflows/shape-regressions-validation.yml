@@ -1,4 +1,4 @@
-name: Validate PyTorch gradient evaluation state
+name: Validate n-fold geodesic broadcasting
 
 on:
   push:
@@ -13,15 +13,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        backend: [pytorch]
-        candidate: [gradient-state]
+        backend: [numpy, autograd, pytorch]
+        candidate: [nfold-geodesic-broadcast]
         include:
-          - candidate: gradient-state
-            sha: 81534adb2b25ccee49550ce7d32ce8aec1b29fba
-            source: geomstats/_backend/pytorch/autodiff.py
-            regression: tests/tests_geomstats/test_backend/test_torch_value_and_grad_state.py
-            adjacent: tests/tests_geomstats/test_backend/test_autodiff.py
-            covered_lines: "[360,361,362,363,366,367]"
+          - candidate: nfold-geodesic-broadcast
+            sha: cb1a8ea97cd28efd23e3706cc01b9e3b17eedd8f
+            source: geomstats/geometry/nfold_manifold.py
+            regression: tests/tests_geomstats/test_geometry/test_nfold_geodesic_broadcasting.py
+            adjacent: tests/tests_geomstats/test_geometry/test_nfold_manifold.py
+            covered_lines: "[346,372]"
     env:
       GEOMSTATS_BACKEND: ${{ matrix.backend }}
       PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
