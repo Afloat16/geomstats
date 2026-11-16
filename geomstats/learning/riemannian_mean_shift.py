@@ -97,17 +97,13 @@ class RiemannianMeanShift(ClusterMixin, BaseEstimator):
             ----------
             x : single point, shape=[1, n_features]
                 Single point on manifold.
-            y : array-like, shape=[1, n_features]
-                Single point on manifold.
+            y : array-like, shape=[n_b, n_features]
+                Points on the manifold.
             """
             return self.space.metric.dist(x, y)
 
         pool = joblib.Parallel(n_jobs=self.n_jobs)
-        out = pool(
-            pickable_dist(point_a, point_b)
-            for point_a in points_a
-            for point_b in points_b
-        )
+        out = pool(pickable_dist(point_a, points_b) for point_a in points_a)
 
         return gs.array(out).reshape((n_a, n_b))
 
