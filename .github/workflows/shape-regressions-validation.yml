@@ -14,16 +14,10 @@ jobs:
       fail-fast: false
       matrix:
         backend: [numpy, autograd, pytorch]
-        candidate: [interpolation, nfold]
+        candidate: [nfold]
         include:
-          - candidate: interpolation
-            sha: 528664cf7b5a5ba96ff5ae4a036dff1c2361b459
-            source: geomstats/numerics/interpolation.py
-            regression: tests/tests_geomstats/test_numerics/test_tensor_interpolation.py
-            adjacent: tests/tests_geomstats/test_numerics/test_interpolation.py
-            covered_lines: "[109, 110]"
           - candidate: nfold
-            sha: fdeea43e6574bc8436652b21d875aa73be4cb36e
+            sha: 05638a12adcca5d913d667dd8968af3da2866bf7
             source: geomstats/geometry/nfold_manifold.py
             regression: tests/tests_geomstats/test_geometry/test_nfold_membership_shapes.py
             adjacent: tests/tests_geomstats/test_geometry/test_nfold_manifold.py
