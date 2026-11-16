@@ -90,22 +90,34 @@ class RiemannianGradientDescent:
 
         for i in range(self.max_iter):
             loss, grad = fun(param)
-            if gs.any(gs.isnan(grad)):
-                logger.warning("NaN encountered in gradient at iter %d", current_iter)
+            accepted = False
+            if not gs.all(gs.abs(grad) < math.inf) or not gs.abs(loss) < math.inf:
+                logger.warning(
+                    "Non-finite objective or gradient at iter %d", current_iter
+                )
                 lr /= 2
                 grad = current_grad
             elif loss >= current_loss and i > 0:
                 lr /= 2
+                grad = current_grad
             else:
                 if not current_iter % 5:
                     lr *= 2
                 coef_hat = coef_hat_new
                 intercept_hat = intercept_hat_new
                 current_iter += 1
-            if abs(loss - current_loss) < self.tol:
-                if self.verbose:
-                    logger.info("Tolerance threshold reached at iter %d", current_iter)
-                break
+                accepted = True
+
+            if accepted:
+                improvement = abs(loss - current_loss)
+                current_loss = loss
+                current_grad = grad
+                if improvement < self.tol:
+                    if self.verbose:
+                        logger.info(
+                            "Tolerance threshold reached at iter %d", current_iter
+                        )
+                    break
 
             grad_intercept, grad_coef = gs.split(grad, 2)
             riem_grad_intercept = space.to_tangent(
@@ -127,9 +139,6 @@ class RiemannianGradientDescent:
 
             param = gs.vstack([gs.flatten(intercept_hat_new), gs.flatten(coef_hat_new)])
 
-            current_loss = loss
-            current_grad = grad
-
         if self.verbose:
             logger.info(
                 "Number of gradient evaluations: %d, "
@@ -140,7 +149,8 @@ class RiemannianGradientDescent:
                 current_loss,
             )
 
-        return OptimizeResult(fun=loss, x=param, nit=current_iter)
+        accepted_param = gs.vstack([gs.flatten(intercept_hat), gs.flatten(coef_hat)])
+        return OptimizeResult(fun=current_loss, x=accepted_param, nit=current_iter)
 
 
 class GeodesicRegression(BaseEstimator):
