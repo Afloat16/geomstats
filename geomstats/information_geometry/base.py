@@ -152,9 +152,9 @@ class ScipyMultivariateRandomVariable(ScipyRandomVariable):
     """A multivariate random variable."""
 
     def _rvs_single(self, point, n_samples):
-        return gs.to_ndarray(
-            self.scp_rvs(point, size=n_samples),
-            to_ndim=len(self.space.support_shape) + 1,
+        return gs.reshape(
+            gs.array(self.scp_rvs(point, size=n_samples)),
+            (n_samples,) + self.space.support_shape,
         )
 
     def rvs(self, point, n_samples=1):
@@ -173,16 +173,21 @@ class ScipyMultivariateRandomVariable(ScipyRandomVariable):
         samples : array-like, shape=[..., n_samples, *support_shape]
             Sample from distribution.
         """
-        if point.ndim > self.space.point_ndim:
-            return gs.stack([self._rvs_single(point_, n_samples) for point_ in point])
+        batch_shape = get_batch_shape(self.space.point_ndim, point)
+        if batch_shape:
+            flat_points = gs.reshape(point, (-1,) + self.space.shape)
+            samples = gs.stack(
+                [self._rvs_single(point_, n_samples) for point_ in flat_points]
+            )
+            return gs.reshape(
+                samples, batch_shape + (n_samples,) + self.space.support_shape
+            )
 
         return self._rvs_single(point, n_samples)
 
     def _pdf_single(self, x, point):
         out = self.scp_pdf(x, point)
-        if x.shape[0] == 1 and point.ndim == self.space.point_ndim:
-            return gs.array([out])
-        return gs.from_numpy(out)
+        return gs.reshape(gs.array(out), (x.shape[0],))
 
     def pdf(self, x, point):
         """Evaluate the probability density function at x.
@@ -196,11 +201,16 @@ class ScipyMultivariateRandomVariable(ScipyRandomVariable):
 
         Returns
         -------
-        pdf_at_x : array-like, shape=[..., n_samples, *support_shape]
+        pdf_at_x : array-like, shape=[..., n_samples]
             Values of pdf at x for each value of the parameters provided
             by point.
         """
-        if point.ndim > self.space.point_ndim:
-            return gs.stack([self._pdf_single(x, point_) for point_ in point])
+        batch_shape = get_batch_shape(self.space.point_ndim, point)
+        if batch_shape:
+            flat_points = gs.reshape(point, (-1,) + self.space.shape)
+            densities = gs.stack(
+                [self._pdf_single(x, point_) for point_ in flat_points]
+            )
+            return gs.reshape(densities, batch_shape + (x.shape[0],))
 
         return self._pdf_single(x, point)
