@@ -1,4 +1,4 @@
-name: Validate broadcast gradients and initial-time integration
+name: Replay n-fold CI graph-regression failure on both versions
 
 on:
   push:
@@ -8,103 +8,68 @@ permissions:
   contents: read
 
 jobs:
-  focused:
+  replay:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
         include:
-          - candidate: "gradient-input-broadcast"
-            backend: "autograd"
-            sha: "0e37b88062c9e9498c7ccd3efdb4ceaa79a0096a"
-            source: "geomstats/_backend/autograd/autodiff.py"
-            sources: "geomstats/_backend/autograd/autodiff.py geomstats/_backend/pytorch/autodiff.py"
-            regression: "tests/tests_geomstats/test_backend/test_value_and_grad_broadcasting.py"
-            adjacent: "tests/tests_geomstats/test_backend/test_autodiff.py"
-            covered_lines: "[48,51,55,181,182]"
-          - candidate: "gradient-input-broadcast"
-            backend: "pytorch"
-            sha: "0e37b88062c9e9498c7ccd3efdb4ceaa79a0096a"
-            source: "geomstats/_backend/pytorch/autodiff.py"
-            sources: "geomstats/_backend/autograd/autodiff.py geomstats/_backend/pytorch/autodiff.py"
-            regression: "tests/tests_geomstats/test_backend/test_value_and_grad_broadcasting.py"
-            adjacent: "tests/tests_geomstats/test_backend/test_autodiff.py"
-            covered_lines: "[50,52,56,351,352,353]"
-          - candidate: "ivp-initial-time"
-            backend: "numpy"
-            sha: "bc4d7d953aa37836b26a06f2aef16bbe1474f7b6"
-            source: "geomstats/numerics/ivp.py"
-            sources: "geomstats/numerics/ivp.py"
-            regression: "tests/tests_geomstats/test_numerics/test_ivp_initial_time.py"
-            adjacent: "tests/tests_geomstats/test_numerics/test_exp.py"
-            covered_lines: "[283,298,299,300]"
-          - candidate: "ivp-initial-time"
-            backend: "autograd"
-            sha: "bc4d7d953aa37836b26a06f2aef16bbe1474f7b6"
-            source: "geomstats/numerics/ivp.py"
-            sources: "geomstats/numerics/ivp.py"
-            regression: "tests/tests_geomstats/test_numerics/test_ivp_initial_time.py"
-            adjacent: "tests/tests_geomstats/test_numerics/test_exp.py"
-            covered_lines: "[283,298,299,300]"
-          - candidate: "ivp-initial-time"
-            backend: "pytorch"
-            sha: "bc4d7d953aa37836b26a06f2aef16bbe1474f7b6"
-            source: "geomstats/numerics/ivp.py"
-            sources: "geomstats/numerics/ivp.py"
-            regression: "tests/tests_geomstats/test_numerics/test_ivp_initial_time.py"
-            adjacent: "tests/tests_geomstats/test_numerics/test_exp.py"
-            covered_lines: "[283,298,299,300]"
+          - label: nfold-aac-constant-regression
+            kind: aac_constant
+            backend: numpy
+            sha: cb1a8ea97cd28efd23e3706cc01b9e3b17eedd8f
+            source: geomstats/geometry/nfold_manifold.py
+
     env:
       GEOMSTATS_BACKEND: ${{ matrix.backend }}
-      PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
       PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONPATH: "."
       SCIPY_ARRAY_API: ${{ matrix.backend == 'pytorch' && '1' || '' }}
+    defaults:
+      run:
+        working-directory: work
     steps:
       - uses: actions/checkout@v4
         with:
+          path: diagnostic
+      - uses: actions/checkout@v4
+        with:
           ref: ${{ matrix.sha }}
-          fetch-depth: 2
+          fetch-depth: 3
+          path: work
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-      - name: Install CPU PyTorch
+          python-version: "3.13"
+      - name: Install official-CI PyTorch version on CPU
         if: matrix.backend == 'pytorch'
-        run: python -m pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
-      - name: Install focused test dependencies
-        run: python -m pip install -e . pytest coverage ruff nbformat nbconvert autograd
-      - name: Verify regressions fail on unchanged upstream
+        run: python -m pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu
+      - name: Install matching numerical dependencies
         run: |
-          for source in ${{ matrix.sources }}; do
-            git show 2fc8e25eb8955767292552f9c0c1438be362ba8f:"$source" > "$source"
-          done
-          set +e
-          python -m pytest -q -p no:cacheprovider ${{ matrix.regression }} > baseline.txt 2>&1
-          status=$?
-          set -e
-          cat baseline.txt
-          test "$status" -eq 1
-          git checkout ${{ matrix.sha }} -- ${{ matrix.sources }}
-      - name: Test candidate and adjacent existing behavior
+          python -m pip install -e . numpy==2.5.5 scipy==1.18.1 scikit-learn==1.9.1 autograd
+          python -m pip freeze > versions.txt
+      - name: Reproduce failure on unchanged upstream
         run: |
-          python -m coverage run --include="*/${{ matrix.source }}" -m pytest -q -p no:cacheprovider ${{ matrix.regression }} ${{ matrix.adjacent }}
-          python -m coverage json -o coverage.json
+          git show 2fc8e25eb8955767292552f9c0c1438be362ba8f:${{ matrix.source }} > ${{ matrix.source }}
+          python ../diagnostic/.github/ci-investigation/probe.py ${{ matrix.kind }} baseline.json --max-seeds 200 --source ${{ matrix.source }}
+      - name: Confirm identical failure with the isolated candidate
+        run: |
+          git checkout ${{ matrix.sha }} -- ${{ matrix.source }}
+          python ../diagnostic/.github/ci-investigation/probe.py ${{ matrix.kind }} candidate.json --replay baseline.json --source ${{ matrix.source }}
           python - <<'PY'
           import json
           from pathlib import Path
-          report = json.loads(Path("coverage.json").read_text())
-          executed = set(report["files"]["${{ matrix.source }}"]["executed_lines"])
-          required = set(json.loads('${{ matrix.covered_lines }}'))
-          assert required <= executed, f"Uncovered changed lines: {required - executed}"
-          print("All changed executable lines are covered.")
+          for name in ["baseline.json", "candidate.json"]:
+              result = json.loads(Path(name).read_text())
+              assert result["result"]["passed"] is False
+              assert result["touched_functions"] == [], result
+          print("Both versions reproduce the same failure without calling the changed source file.")
           PY
-      - name: Check formatting and lint
-        run: |
-          ruff check ${{ matrix.sources }} ${{ matrix.regression }}
-          ruff format --check ${{ matrix.sources }} ${{ matrix.regression }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ${{ matrix.candidate }}-${{ matrix.backend }}-regression-results
+          name: ${{ matrix.label }}-${{ matrix.backend }}-baseline-comparison
           path: |
-            baseline.txt
-            coverage.json
+            work/baseline.json
+            work/candidate.json
+            work/versions.txt
