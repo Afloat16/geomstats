@@ -39,7 +39,7 @@ class Interpolator(ABC):
 
 class _LinearInterpolator1D(Interpolator, ABC):
     def __init__(self, data, point_ndim=1):
-        self.data = data
+        self.data = data if gs.is_array(data) else gs.array(data)
         self.point_ndim = point_ndim
 
         time_axis = -(point_ndim + 1)
@@ -88,7 +88,7 @@ class _LinearInterpolator1D(Interpolator, ABC):
         point : array-like, shape=[..., n_time, *point_shape]
         """
         if not gs.is_array(t):
-            t = gs.array([t])
+            t = gs.array(t)
 
         if gs.ndim(t) == 0:
             t = gs.expand_dims(t, axis=0)
@@ -180,7 +180,7 @@ class LinearInterpolator1D(_LinearInterpolator1D):
 
     def __init__(self, times, data, point_ndim=1):
         super().__init__(data, point_ndim=point_ndim)
-        self.times = times
+        self.times = times if gs.is_array(times) else gs.array(times)
         self._delta = self.times[1:] - self.times[:-1]
 
     def _from_t_to_interval(self, t):
