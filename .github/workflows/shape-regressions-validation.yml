@@ -1,4 +1,4 @@
-name: Validate integer finite-difference regressions
+name: Validate batched Autograd matrix-function adjoints
 
 on:
   push:
@@ -13,15 +13,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        backend: [numpy, autograd, pytorch]
-        candidate: [finite]
+        backend: [autograd]
+        candidate: [adjoint]
         include:
-          - candidate: finite
-            sha: 9b6b6cfc9b987d04bd98fd5a69970b2cfbbca7d4
-            source: geomstats/numerics/finite_differences.py
-            regression: tests/tests_geomstats/test_numerics/test_finite_difference_dtypes.py
-            adjacent: tests/tests_geomstats/test_numerics/test_finite_differences.py
-            covered_lines: "[28, 29, 70, 71, 123, 124]"
+          - candidate: adjoint
+            sha: 5e09ba4d8123f0a40799004f8f7d7f8d0eed1a2e
+            source: geomstats/_backend/autograd/linalg.py
+            regression: tests/tests_geomstats/test_backend/test_autograd_matrix_adjoint.py
+            adjacent: tests/tests_geomstats/test_backend/test_autodiff.py
+            covered_lines: "[28, 34, 35]"
     env:
       GEOMSTATS_BACKEND: ${{ matrix.backend }}
       PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
@@ -64,7 +64,6 @@ jobs:
           print("All changed executable lines are covered.")
           PY
       - name: Check formatting and lint
-        if: matrix.backend == 'numpy'
         run: |
           ruff check ${{ matrix.source }} ${{ matrix.regression }}
           ruff format --check ${{ matrix.source }} ${{ matrix.regression }}
