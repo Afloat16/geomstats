@@ -1,4 +1,4 @@
-name: Validate metric bases and concentrated directional sampling
+name: Validate broadcast gradients and initial-time integration
 
 on:
   push:
@@ -13,21 +13,47 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        backend: [numpy, autograd, pytorch]
-        candidate: [normal-basis, vmf-concentration]
         include:
-          - candidate: normal-basis
-            sha: 4bb57d8e9c621c973f7b62a10fbd335789d59425
-            source: geomstats/geometry/riemannian_metric.py
-            regression: tests/tests_geomstats/test_geometry/test_metric_basis_normalization.py
-            adjacent: tests/tests_geomstats/test_geometry/test_euclidean.py tests/tests_geomstats/test_geometry/test_matrices.py
-            covered_lines: "[538,541]"
-          - candidate: vmf-concentration
-            sha: 97e2c8f1437c5c78c3192e135d4b89ef6dc565e0
-            source: geomstats/geometry/hypersphere.py
-            regression: tests/tests_geomstats/test_geometry/test_von_mises_fisher_concentration.py
-            adjacent: tests/tests_geomstats/test_geometry/test_hypersphere.py::TestVonMisesFisher tests/tests_geomstats/test_geometry/test_hypersphere.py::TestVonMisesFisherKappa tests/tests_geomstats/test_geometry/test_hypersphere.py::TestHypersphereMetric::test_exp_after_log
-            covered_lines: "[534,1555,1556,1557,1559,1560,1566,1567,1568,1569,1581,1591,1592,1596]"
+          - candidate: "gradient-input-broadcast"
+            backend: "autograd"
+            sha: "0e37b88062c9e9498c7ccd3efdb4ceaa79a0096a"
+            source: "geomstats/_backend/autograd/autodiff.py"
+            sources: "geomstats/_backend/autograd/autodiff.py geomstats/_backend/pytorch/autodiff.py"
+            regression: "tests/tests_geomstats/test_backend/test_value_and_grad_broadcasting.py"
+            adjacent: "tests/tests_geomstats/test_backend/test_autodiff.py"
+            covered_lines: "[48,51,55,181,182]"
+          - candidate: "gradient-input-broadcast"
+            backend: "pytorch"
+            sha: "0e37b88062c9e9498c7ccd3efdb4ceaa79a0096a"
+            source: "geomstats/_backend/pytorch/autodiff.py"
+            sources: "geomstats/_backend/autograd/autodiff.py geomstats/_backend/pytorch/autodiff.py"
+            regression: "tests/tests_geomstats/test_backend/test_value_and_grad_broadcasting.py"
+            adjacent: "tests/tests_geomstats/test_backend/test_autodiff.py"
+            covered_lines: "[50,52,56,351,352,353]"
+          - candidate: "ivp-initial-time"
+            backend: "numpy"
+            sha: "bc4d7d953aa37836b26a06f2aef16bbe1474f7b6"
+            source: "geomstats/numerics/ivp.py"
+            sources: "geomstats/numerics/ivp.py"
+            regression: "tests/tests_geomstats/test_numerics/test_ivp_initial_time.py"
+            adjacent: "tests/tests_geomstats/test_numerics/test_exp.py"
+            covered_lines: "[283,298,299,300]"
+          - candidate: "ivp-initial-time"
+            backend: "autograd"
+            sha: "bc4d7d953aa37836b26a06f2aef16bbe1474f7b6"
+            source: "geomstats/numerics/ivp.py"
+            sources: "geomstats/numerics/ivp.py"
+            regression: "tests/tests_geomstats/test_numerics/test_ivp_initial_time.py"
+            adjacent: "tests/tests_geomstats/test_numerics/test_exp.py"
+            covered_lines: "[283,298,299,300]"
+          - candidate: "ivp-initial-time"
+            backend: "pytorch"
+            sha: "bc4d7d953aa37836b26a06f2aef16bbe1474f7b6"
+            source: "geomstats/numerics/ivp.py"
+            sources: "geomstats/numerics/ivp.py"
+            regression: "tests/tests_geomstats/test_numerics/test_ivp_initial_time.py"
+            adjacent: "tests/tests_geomstats/test_numerics/test_exp.py"
+            covered_lines: "[283,298,299,300]"
     env:
       GEOMSTATS_BACKEND: ${{ matrix.backend }}
       PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
@@ -37,7 +63,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ matrix.sha }}
-          fetch-depth: 5
+          fetch-depth: 2
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -46,17 +72,19 @@ jobs:
         run: python -m pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
       - name: Install focused test dependencies
         run: python -m pip install -e . pytest coverage ruff nbformat nbconvert autograd
-      - name: Verify regression tests fail on unchanged upstream
+      - name: Verify regressions fail on unchanged upstream
         run: |
-          git show 2fc8e25eb8955767292552f9c0c1438be362ba8f:${{ matrix.source }} > ${{ matrix.source }}
+          for source in ${{ matrix.sources }}; do
+            git show 2fc8e25eb8955767292552f9c0c1438be362ba8f:"$source" > "$source"
+          done
           set +e
           python -m pytest -q -p no:cacheprovider ${{ matrix.regression }} > baseline.txt 2>&1
           status=$?
           set -e
           cat baseline.txt
           test "$status" -eq 1
-          git checkout ${{ matrix.sha }} -- ${{ matrix.source }}
-      - name: Test the candidate and adjacent existing behavior
+          git checkout ${{ matrix.sha }} -- ${{ matrix.sources }}
+      - name: Test candidate and adjacent existing behavior
         run: |
           python -m coverage run --include="*/${{ matrix.source }}" -m pytest -q -p no:cacheprovider ${{ matrix.regression }} ${{ matrix.adjacent }}
           python -m coverage json -o coverage.json
@@ -71,8 +99,8 @@ jobs:
           PY
       - name: Check formatting and lint
         run: |
-          ruff check ${{ matrix.source }} ${{ matrix.regression }}
-          ruff format --check ${{ matrix.source }} ${{ matrix.regression }}
+          ruff check ${{ matrix.sources }} ${{ matrix.regression }}
+          ruff format --check ${{ matrix.sources }} ${{ matrix.regression }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
