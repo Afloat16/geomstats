@@ -392,8 +392,13 @@ class GeodesicRegression(BaseEstimator):
         """
         times = gs.copy(X)
         if self.center_X:
-            self.mean_ = gs.mean(X)
-            times -= self.mean_
+            mean_dtype = (
+                None
+                if gs.is_floating(times) or gs.is_complex(times)
+                else gs.get_default_dtype()
+            )
+            self.mean_ = gs.mean(times, dtype=mean_dtype)
+            times = times - self.mean_
 
         if self.method == "extrinsic":
             res = self._fit_extrinsic(times, y, weights)
