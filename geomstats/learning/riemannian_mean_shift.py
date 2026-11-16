@@ -3,6 +3,8 @@
 Lead author: Nina Miolane and Shubham Talbar.
 """
 
+from copy import deepcopy
+
 import joblib
 from sklearn.base import BaseEstimator, ClusterMixin
 
@@ -148,7 +150,8 @@ class RiemannianMeanShift(ClusterMixin, BaseEstimator):
             weights : array-like,
                 Weight associated with each point in cluster.
             """
-            return self.mean_estimator.fit(points, weights=weights).estimate_
+            mean_estimator = deepcopy(self.mean_estimator)
+            return mean_estimator.fit(points, weights=weights).estimate_
 
         centers = self._initialization(X)
 
