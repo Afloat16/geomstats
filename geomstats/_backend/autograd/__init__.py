@@ -361,7 +361,7 @@ def matmul(*args, **kwargs):
 def matvec(A, b):
     if b.ndim == 1:
         return _np.matmul(A, b)
-    if A.ndim == 2:
+    if A.ndim == 2 and b.ndim == 2:
         return _np.matmul(A, b.T).T
     return _np.einsum("...ij,...j->...i", A, b)
 
@@ -370,7 +370,7 @@ def dot(a, b):
     if b.ndim == 1:
         return _np.dot(a, b)
 
-    if a.ndim == 1:
+    if a.ndim == 1 and b.ndim == 2:
         return _np.dot(a, b.T)
 
     return _np.einsum("...i,...i->...", a, b)

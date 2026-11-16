@@ -666,7 +666,7 @@ def matvec(A, b):
     if b.ndim == 1:  # A.ndim > 2
         return _torch.matmul(A, b)
 
-    if A.ndim == 2:  # b.ndim > 1
+    if A.ndim == 2 and b.ndim == 2:
         return _torch.matmul(A, b.T).T
 
     return _torch.einsum("...ij,...j->...i", A, b)
@@ -681,7 +681,7 @@ def dot(a, b):
     if b.ndim == 1:
         return _torch.tensordot(a, b, dims=1)
 
-    if a.ndim == 1:
+    if a.ndim == 1 and b.ndim == 2:
         return _torch.tensordot(a, b.T, dims=1)
 
     return _torch.einsum("...i,...i->...", a, b)
