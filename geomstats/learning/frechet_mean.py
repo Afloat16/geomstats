@@ -912,7 +912,7 @@ class _BaseMeanEstimator(BaseEstimator, abc.ABC):
     def __init__(self, space, method="default", optimizer_kwargs=None):
         self.space = space
         self.method = method
-        self.optimizer_kwargs = optimizer_kwargs or {}
+        self.optimizer_kwargs = {} if optimizer_kwargs is None else optimizer_kwargs
 
         self.estimate_ = None
         self.optimizer_ = None
