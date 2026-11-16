@@ -20,7 +20,7 @@ jobs:
             sha: 9e87f5b22f2a4d950d82397670debd05eee2d345
             source: geomstats/geometry/riemannian_metric.py
             regression: tests/tests_geomstats/test_geometry/test_metric_basis_normalization.py
-            adjacent: tests/tests_geomstats/test_geometry/test_riemannian_metric.py
+            adjacent: tests/tests_geomstats/test_geometry/test_euclidean.py tests/tests_geomstats/test_geometry/test_matrices.py
             covered_lines: "[538,541]"
     env:
       GEOMSTATS_BACKEND: ${{ matrix.backend }}
