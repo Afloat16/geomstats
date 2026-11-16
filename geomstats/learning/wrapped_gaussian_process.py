@@ -209,10 +209,9 @@ class WrappedGaussianProcess(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         Returns
         -------
-        y_samples : ndarray of shape (n_samples_X, n_samples), or \
-            (n_samples_X, *target_shape, n_samples)
+        y_samples : ndarray of shape (n_samples_X, *target_shape, n_samples)
             Values of n_samples samples drawn from wrapped Gaussian process and
-            evaluated at query points.
+            evaluated at query points. Singleton point dimensions are retained.
         """
         tangent_samples = gs.from_numpy(
             self.euclidean_gpr.sample_y(X, n_samples, random_state)
@@ -233,7 +232,4 @@ class WrappedGaussianProcess(MultiOutputMixin, RegressorMixin, BaseEstimator):
             flat_y_samples, (X.shape[0], n_samples, *self.space.shape)
         )
 
-        if gs.ndim(tangent_samples) > 2:
-            y_samples = gs.moveaxis(y_samples, 1, -1)
-
-        return y_samples
+        return gs.moveaxis(y_samples, 1, -1)
