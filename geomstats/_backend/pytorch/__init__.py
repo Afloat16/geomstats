@@ -230,6 +230,8 @@ def allclose(a, b, atol=atol, rtol=rtol):
     if not isinstance(b, _torch.Tensor):
         b = _torch.tensor(b)
     a, b = _torch.broadcast_tensors(a, b)
+    dtype = _torch.promote_types(a.dtype, b.dtype)
+    a, b = a.to(dtype), b.to(dtype)
     return _torch.allclose(a, b, atol=atol, rtol=rtol)
 
 
@@ -280,6 +282,8 @@ def isclose(x, y, rtol=rtol, atol=atol):
         x = _torch.tensor(x)
     if not _torch.is_tensor(y):
         y = _torch.tensor(y)
+    dtype = _torch.promote_types(x.dtype, y.dtype)
+    x, y = x.to(dtype), y.to(dtype)
     return _torch.isclose(x, y, atol=atol, rtol=rtol)
 
 
