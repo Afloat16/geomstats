@@ -1,4 +1,4 @@
-name: Replay upstream CI failures on identical baseline and candidate inputs
+name: Validate SciPy numerical Jacobian modes
 
 on:
   push:
@@ -8,79 +8,72 @@ permissions:
   contents: read
 
 jobs:
-  replay:
+  focused:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
+        backend: [numpy, autograd, pytorch]
+        candidate: [jacobian-modes]
         include:
-          - kind: exp_after_log
-            backend: pytorch
-            sha: 05638a12adcca5d913d667dd8968af3da2866bf7
-            source: geomstats/geometry/nfold_manifold.py
-          - kind: dist_symmetry
-            backend: numpy
-            sha: 9b6b6cfc9b987d04bd98fd5a69970b2cfbbca7d4
-            source: geomstats/numerics/finite_differences.py
-          - kind: hemisphere
-            backend: autograd
-            sha: 9b6b6cfc9b987d04bd98fd5a69970b2cfbbca7d4
-            source: geomstats/numerics/finite_differences.py
-          - kind: barycenter
-            backend: pytorch
-            sha: 5e09ba4d8123f0a40799004f8f7d7f8d0eed1a2e
-            source: geomstats/_backend/autograd/linalg.py
-
+          - candidate: jacobian-modes
+            sha: 9c15306358c54ed8ed29d3ef799b0e1cdd19851d
+            source: geomstats/numerics/optimization/_scipy.py
+            regression: tests/tests_geomstats/test_numerics/test_scipy_jacobian_modes.py
+            adjacent: tests/tests_geomstats/test_numerics/test_optimization.py
+            covered_lines: "[61,67,70,118]"
     env:
       GEOMSTATS_BACKEND: ${{ matrix.backend }}
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
       PYTHONDONTWRITEBYTECODE: "1"
-      PYTHONPATH: "."
       SCIPY_ARRAY_API: ${{ matrix.backend == 'pytorch' && '1' || '' }}
-    defaults:
-      run:
-        working-directory: work
     steps:
-      - uses: actions/checkout@v4
-        with:
-          path: diagnostic
       - uses: actions/checkout@v4
         with:
           ref: ${{ matrix.sha }}
           fetch-depth: 3
-          path: work
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
-      - name: Install official-CI PyTorch version on CPU
+          python-version: "3.12"
+      - name: Install CPU PyTorch
         if: matrix.backend == 'pytorch'
-        run: python -m pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu
-      - name: Install matching numerical dependencies
-        run: |
-          python -m pip install -e . numpy==2.5.5 scipy==1.18.1 scikit-learn==1.9.1 autograd
-          python -m pip freeze > versions.txt
-      - name: Reproduce failure on unchanged upstream
+        run: python -m pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu
+      - name: Install focused test dependencies
+        run: python -m pip install -e . pytest coverage ruff nbformat nbconvert autograd
+      - name: Install optional optimizer used by adjacent PyTorch tests
+        if: matrix.backend == 'pytorch'
+        run: python -m pip install pytorch-minimize --no-deps
+      - name: Verify regression tests fail on unchanged upstream
         run: |
           git show 2fc8e25eb8955767292552f9c0c1438be362ba8f:${{ matrix.source }} > ${{ matrix.source }}
-          python ../diagnostic/.github/ci-investigation/probe.py ${{ matrix.kind }} baseline.json --input ../diagnostic/.github/ci-investigation/${{ matrix.kind }}.json --source ${{ matrix.source }}
-      - name: Confirm identical failure with the isolated candidate
-        run: |
+          set +e
+          python -m pytest -q -p no:cacheprovider ${{ matrix.regression }} > baseline.txt 2>&1
+          status=$?
+          set -e
+          cat baseline.txt
+          test "$status" -eq 1
           git checkout ${{ matrix.sha }} -- ${{ matrix.source }}
-          python ../diagnostic/.github/ci-investigation/probe.py ${{ matrix.kind }} candidate.json --replay baseline.json --source ${{ matrix.source }}
+      - name: Test the candidate and adjacent existing behavior
+        run: |
+          python -m coverage run --include="*/${{ matrix.source }}" -m pytest -q -p no:cacheprovider ${{ matrix.regression }} ${{ matrix.adjacent }}
+          python -m coverage json -o coverage.json
           python - <<'PY'
           import json
           from pathlib import Path
-          for name in ["baseline.json", "candidate.json"]:
-              result = json.loads(Path(name).read_text())
-              assert result["result"]["passed"] is False
-              assert result["touched_functions"] == [], result
-          print("Both versions reproduce the same failure without calling the changed source file.")
+          report = json.loads(Path("coverage.json").read_text())
+          executed = set(report["files"]["${{ matrix.source }}"]["executed_lines"])
+          required = set(json.loads('${{ matrix.covered_lines }}'))
+          assert required <= executed, f"Uncovered changed lines: {required - executed}"
+          print("All changed executable lines are covered.")
           PY
+      - name: Check formatting and lint
+        run: |
+          ruff check ${{ matrix.source }} ${{ matrix.regression }}
+          ruff format --check ${{ matrix.source }} ${{ matrix.regression }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ${{ matrix.kind }}-${{ matrix.backend }}-baseline-comparison
+          name: ${{ matrix.candidate }}-${{ matrix.backend }}-regression-results
           path: |
-            work/baseline.json
-            work/candidate.json
-            work/versions.txt
+            baseline.txt
+            coverage.json
